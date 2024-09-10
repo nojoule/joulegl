@@ -15,7 +15,7 @@ from .window import Window, WindowHandler
 
 
 class App(Timed):
-    def __init__(self, app_name: str = "JouleGL") -> None:
+    def __init__(self, app_name: str = "JouleGL", hidden: bool = False) -> None:
         super().__init__()
         self.title: str = app_name
         self.name = app_name.lower().replace(" ", "-")
@@ -23,7 +23,7 @@ class App(Timed):
 
         self.window_handler: WindowHandler = WindowHandler()
         self.window: Window = self.window_handler.create_window(
-            self.name, title=self.title
+            self.name, hidden=hidden, title=self.title
         )
         self.window.set_callbacks(self.key_input, self.mouse_input)
         self.window.activate()

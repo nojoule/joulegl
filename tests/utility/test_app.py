@@ -29,7 +29,7 @@ class WrappedApp:
             time.sleep(0.01)
 
     def run(self):
-        self.app = App(self.name)
+        self.app = App(self.name, True)
         self.app.run()
 
     def close(self):
@@ -38,7 +38,7 @@ class WrappedApp:
 
 
 def test_initialize_app() -> None:
-    app = App("Test Test 1")
+    app = App("Test Test 1", True)
     assert app is not None
     assert app.title == "Test Test 1"
     assert app.name == "test-test-1"

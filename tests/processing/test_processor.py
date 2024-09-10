@@ -98,3 +98,4 @@ def test_compute_processor() -> None:
     sp.delete()
     sdh.buffer.delete()
     window.destroy()
+    glfw.terminate()

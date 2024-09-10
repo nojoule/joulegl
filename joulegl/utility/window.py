@@ -241,6 +241,8 @@ class WindowHandler:
     ) -> Window:
         if hidden:
             glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
+        else:
+            glfw.window_hint(glfw.VISIBLE, glfw.TRUE)
         if transparent:
             glfw.window_hint(glfw.TRANSPARENT_FRAMEBUFFER, glfw.TRUE)
         else:
