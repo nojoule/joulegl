@@ -22,6 +22,7 @@ class BufferObject:
         render_data_size: List[int] | None = None,
         existing_handle: int | None = None,
     ) -> None:
+        self.data: np.ndarray | None = None
         self.existing: bool = existing_handle is not None
         if existing_handle is not None:
             self.handle: int = existing_handle
@@ -40,7 +41,7 @@ class BufferObject:
         if render_data_size is None:
             self.render_data_size = [4]
 
-    def load(self, data: any) -> None:
+    def load(self, data: np.ndarray) -> None:
         glBindVertexArray(0)
 
         self.data = data
@@ -62,10 +63,13 @@ class BufferObject:
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.handle)
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.nbytes, data, GL_STATIC_DRAW)
 
-    def read(self) -> any:
+    def read(self) -> np.ndarray:
         if self.buffer_type == BufferType.SSBO:
             glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.handle)
-            return glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, self.size)
+            return np.frombuffer(
+                glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, self.size),
+                dtype=self.data.dtype,
+            )
 
     def bind(self, location: int, rendering: bool = False, divisor: int = 0) -> None:
         if self.buffer_type == BufferType.SSBO:

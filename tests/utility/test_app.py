@@ -45,6 +45,8 @@ def test_initialize_app() -> None:
     assert not app.closed
     assert app.window is not None
 
+    app.close()
+
 
 def test_app_close() -> None:
     wrapped_app = WrappedApp("Test Test 2")
@@ -57,6 +59,7 @@ def test_app_close() -> None:
     assert app.window is not None
 
     wrapped_app.close()
+    assert app.closed
 
 
 def test_app_cam_changes():

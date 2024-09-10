@@ -13,11 +13,11 @@ class BaseDataHandler:
 
     @abc.abstractmethod
     def set(self, rendering: bool = False) -> None:
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def delete(self) -> None:
-        pass
+        raise NotImplementedError
 
 
 class VertexDataHandler(BaseDataHandler):

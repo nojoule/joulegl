@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Dict
 
-from ...utility.definitions import BASE_PATH
+from ...utility.definitions import SHADER_PATH
 from ..base.shader import BaseShader, ShaderSetting
 from ..base.shader_parser import ShaderParser, get_shader_src
 from .shader import RenderShader, RenderShaderSetting
@@ -13,17 +13,19 @@ class BaseShaderHandler:
     def __init__(self) -> None:
         __metaclass__ = abc.ABCMeta
         self.shader_list: Dict[str, BaseShader] = dict()
-        self.shader_dir: str = os.path.join(BASE_PATH, "shader")
+        self.shader_dir: str = SHADER_PATH
         if not os.path.exists(self.shader_dir):
-            self.shader_dir = os.path.join(Path(BASE_PATH).parent.absolute(), "shader")
+            self.shader_dir = os.path.join(
+                Path(SHADER_PATH).parent.absolute(), "shader"
+            )
             if not os.path.exists(self.shader_dir):
-                self.shader_dir = BASE_PATH
+                self.shader_dir = SHADER_PATH
 
     @abc.abstractmethod
     def create(
         self, shader_setting: ShaderSetting, parser: ShaderParser | None = None
     ) -> BaseShader:
-        return None
+        raise NotImplementedError
 
     def get(self, shader_name: str) -> BaseShader:
         return self.shader_list[shader_name]

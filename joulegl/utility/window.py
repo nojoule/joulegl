@@ -8,16 +8,56 @@ from .camera import Camera, CameraPose
 from .window_config import WindowConfig
 
 
-class Window:
+class BaseWindow:
     def __init__(self, config: WindowConfig) -> None:
         self.config: WindowConfig = config
         self.window_handle = glfw.create_window(
             config["width"], config["height"], config["title"], None, None
         )
-
         if not self.window_handle:
             raise Exception("glfw window can not be created!")
+
         self.active: bool = False
+
+    def set_size(self, width: float, height: float) -> None:
+        self.config["width"] = width
+        self.config["height"] = height
+        if self.active:
+            glViewport(0, 0, width, height)
+
+    def get_size(self) -> Tuple[float, float]:
+        return self.config["width"], self.config["height"]
+
+    def activate(self) -> None:
+        if self.config["monitor_id"] is not None and 0 <= self.config[
+            "monitor_id"
+        ] < len(glfw.get_monitors()):
+            glfw.set_window_pos(
+                self.window_handle, self.config["screen_x"], self.config["screen_y"]
+            )
+        elif self.config["monitor_id"] is not None:
+            self.config["screen_x"] = 0
+            self.config["screen_y"] = 0
+            glfw.set_window_pos(self.window_handle, 0, 0)
+
+        glfw.make_context_current(self.window_handle)
+        glfw.set_input_mode(self.window_handle, glfw.CURSOR, glfw.CURSOR_NORMAL)
+        glViewport(0, 0, self.config["width"], self.config["height"])
+        self.active = True
+
+    def is_active(self) -> bool:
+        return not glfw.window_should_close(self.window_handle)
+
+    def swap(self) -> None:
+        glfw.swap_buffers(self.window_handle)
+
+    def destroy(self) -> None:
+        glfw.destroy_window(self.window_handle)
+
+
+class Window(BaseWindow):
+    def __init__(self, config: WindowConfig) -> None:
+        super().__init__(config)
         self.cam: Camera = Camera(
             self.config["width"],
             self.config["height"],
@@ -40,14 +80,8 @@ class Window:
         self.frame_id: int = 0
 
     def set_size(self, width: float, height: float) -> None:
-        self.config["width"] = width
-        self.config["height"] = height
-        if self.active:
-            glViewport(0, 0, width, height)
+        super().set_size(width, height)
         self.cam.set_size(width, height)
-
-    def get_size(self) -> Tuple[float, float]:
-        return self.config["width"], self.config["height"]
 
     def set_callbacks(
         self,
@@ -176,32 +210,6 @@ class Window:
         glfw.set_mouse_button_callback(self.window_handle, mouse_button_clb)
         glfw.set_window_focus_callback(self.window_handle, focus_clb)
         glfw.set_window_pos_callback(self.window_handle, window_pos_clb)
-
-    def activate(self) -> None:
-        if self.config["monitor_id"] is not None and 0 <= self.config[
-            "monitor_id"
-        ] < len(glfw.get_monitors()):
-            glfw.set_window_pos(
-                self.window_handle, self.config["screen_x"], self.config["screen_y"]
-            )
-        elif self.config["monitor_id"] is not None:
-            self.config["screen_x"] = 0
-            self.config["screen_y"] = 0
-            glfw.set_window_pos(self.window_handle, 0, 0)
-
-        glfw.make_context_current(self.window_handle)
-        glfw.set_input_mode(self.window_handle, glfw.CURSOR, glfw.CURSOR_NORMAL)
-        glViewport(0, 0, self.config["width"], self.config["height"])
-        self.active = True
-
-    def is_active(self) -> bool:
-        return not glfw.window_should_close(self.window_handle)
-
-    def swap(self) -> None:
-        glfw.swap_buffers(self.window_handle)
-
-    def destroy(self) -> None:
-        glfw.destroy_window(self.window_handle)
 
     def update(self) -> None:
         self.cam.update()

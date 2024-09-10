@@ -13,4 +13,4 @@ class ComputeProcessor(BaseProcessor):
 
     @abc.abstractmethod
     def process(self, set_name: str, config: ShaderConfig | None = None) -> None:
-        return
+        raise NotImplementedError

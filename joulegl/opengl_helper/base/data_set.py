@@ -34,7 +34,7 @@ class BaseShaderSet:
 
     @abc.abstractmethod
     def use(self, render: bool = False) -> None:
-        pass
+        raise NotImplementedError
 
 
 class DefaultSet(BaseShaderSet):

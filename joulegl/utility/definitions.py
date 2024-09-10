@@ -4,6 +4,12 @@ from typing import Generator, Tuple, TypeVar
 
 BASE_PATH = os.path.dirname(sys.modules["__main__"].__file__)
 
+SHADER_PATH = (
+    os.path.join(BASE_PATH, "shader")
+    if os.environ.get("TESTING") is None
+    else "tests/shader"
+)
+
 # if the environment is set to TESTING, the path will be set to tests/tmp
 
 SCREENSHOT_PATH = (
