@@ -172,7 +172,6 @@ class BallProcessor(ComputeProcessor):
 class BallApp(App):
     def __init__(self) -> None:
         super().__init__("Ball Demo")
-        self.window.cam.update_base(np.array([5.0, 5.0, 5.0], dtype=np.float32))
         size: Tuple[int, int, int] = (10, 10, 10)
         balls: List[BallData] = []
         for x in range(size[0] * 10):
@@ -196,7 +195,6 @@ class BallApp(App):
         self.br: BallRenderer = BallRenderer(self.bdh)
         self.bp: BallProcessor = BallProcessor(self.bdh)
         self.br_config: ShaderConfig = ShaderConfig()
-
         self.set_cam(np.array([5.0, 5.0, 5.0], dtype=np.float32), 60.0, CameraPose.LEFT)
         self.active_renderer = "triangle"
 
@@ -220,4 +218,4 @@ class BallApp(App):
 
 if __name__ == "__main__":
     app = BallApp()
-    app.start()
+    app.run()

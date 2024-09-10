@@ -1,0 +1,11 @@
+[run]
+omit =
+    */__init__.py
+    */tests/*
+    *conftest*
+    */config-3.py
+    */config.py
+relative_files = True
+[report]
+exclude_lines =
+    pragma: no cover

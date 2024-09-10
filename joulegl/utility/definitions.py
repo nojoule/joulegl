@@ -3,7 +3,15 @@ import sys
 from typing import Generator, Tuple, TypeVar
 
 BASE_PATH = os.path.dirname(sys.modules["__main__"].__file__)
-SCREENSHOT_PATH = os.path.join(os.getcwd(), "storage", "screenshots")
+
+# if the environment is set to TESTING, the path will be set to tests/tmp
+
+SCREENSHOT_PATH = (
+    os.path.join(BASE_PATH, "screenshots")
+    if os.environ.get("TESTING") is None
+    else "tests/tmp/screenshots"
+)
+
 
 _T = TypeVar("_T")
 

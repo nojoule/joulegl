@@ -5,7 +5,6 @@ import numpy as np
 from OpenGL.GL import *
 
 from .camera import Camera, CameraPose
-from .singleton import Singleton
 from .window_config import WindowConfig
 
 
@@ -217,12 +216,12 @@ class Window:
         self.mouse_captured = not self.mouse_captured
 
 
-class WindowHandler(metaclass=Singleton):
+class WindowHandler:
     def __init__(self) -> None:
         self.windows: Dict[str, Window] = dict()
 
         if not glfw.init():
-            raise Exception("glfw can not be initialized!")
+            pass  # raise Exception("glfw can not be initialized!")
 
     def create_window(
         self,
@@ -231,7 +230,7 @@ class WindowHandler(metaclass=Singleton):
         title: str = "JouleGL",
         transparent: bool = False,
         borderless: bool = False,
-    ) -> None:
+    ) -> Window:
         if hidden:
             glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
         if transparent:
@@ -267,3 +266,8 @@ class WindowHandler(metaclass=Singleton):
         glfw.poll_events()
         for _, window in self.windows.items():
             window.update()
+
+    def close(self, window: Window) -> None:
+        if window.is_active():
+            window.destroy()
+        self.windows.pop(window.config["title"])

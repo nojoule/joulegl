@@ -42,7 +42,7 @@ class Timed:
     def __init__(self) -> None:
         self.fps: float = 120
         self.current_fps: float = 0
-        self.__frame_count: int = 0
+        self.frame_count: int = 0
         self.__to_pause_time: float = 0
         self.__last_frame_count: int = 0
         self.__checked_frame_count: int = -1
@@ -55,29 +55,28 @@ class Timed:
         self.__to_pause_time -= self.__start_time - self.__last_time
 
     def check_time(self) -> int:
-        self.__frame_count += 1
+        self.frame_count += 1
 
         current_time: float = time.perf_counter()
         if current_time - self.__check_time > 1.0:
-            self.current_fps = float(
-                self.__frame_count - self.__checked_frame_count
-            ) / (current_time - self.__check_time)
-            self.__checked_frame_count = self.__frame_count
+            self.current_fps = float(self.frame_count - self.__checked_frame_count) / (
+                current_time - self.__check_time
+            )
+            self.__checked_frame_count = self.frame_count
             self.__check_time = current_time
-            print(self.current_fps)
 
         pause_for: int = 0
 
         elapsed_time: float = current_time - self.__start_time
         if elapsed_time > 0.0001:
             self.__to_pause_time += (
-                float(self.__frame_count - self.__last_frame_count) / self.fps
+                float(self.frame_count - self.__last_frame_count) / self.fps
             ) - elapsed_time
         if self.__to_pause_time > 0.015:
             pause_for = int(self.__to_pause_time * 1000.0)
         elif self.__to_pause_time < -0.1:
             self.__to_pause_time = -0.1
         self.__last_time = current_time
-        self.__last_frame_count = self.__frame_count
+        self.__last_frame_count = self.frame_count
 
         return pause_for

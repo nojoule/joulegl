@@ -183,4 +183,4 @@ class BlockApp(App):
 
 if __name__ == "__main__":
     app = BlockApp()
-    app.start()
+    app.run()
