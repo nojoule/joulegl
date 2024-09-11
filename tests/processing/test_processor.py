@@ -9,23 +9,9 @@ from joulegl.opengl_helper.buffer import BufferObject, BufferType
 from joulegl.opengl_helper.compute.shader import ComputeShader, ComputeShaderSetting
 from joulegl.opengl_helper.vertex_data_handler import VertexDataHandler
 from joulegl.processing.processor import ComputeProcessor
+from joulegl.utility.glcontext import GLContext
 from joulegl.utility.window import BaseWindow
 from joulegl.utility.window_config import WindowConfig
-
-
-class GLContext:
-    def __init__(self) -> None:
-        pass
-
-    def __enter__(self):
-        glfw.init()
-        glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
-        self.window = BaseWindow(WindowConfig())
-        self.window.activate()
-
-    def __exit__(self, *args):
-        self.window.destroy()
-        glfw.terminate()
 
 
 class SampleDataHandler:
@@ -68,7 +54,7 @@ class SampleProcessor(ComputeProcessor):
         self.execute_funcs["add"] = generate_compute_func(self.shaders["add"])
         self.element_count_funcs["add"] = generate_element_count_func(self.sdh)
 
-        self.create_sets(self.data_handler)
+        self.create_sets(self.data_handler, "add")
 
     def process(self, set_name: str, config: ShaderConfig | None = None) -> None:
         current_set: BaseShaderSet = self.sets[set_name]

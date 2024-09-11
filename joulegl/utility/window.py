@@ -40,6 +40,7 @@ class BaseWindow:
             self.config["screen_y"] = 0
             glfw.set_window_pos(self.window_handle, 0, 0)
 
+        glfw.get_current_context()
         glfw.make_context_current(self.window_handle)
         glfw.set_input_mode(self.window_handle, glfw.CURSOR, glfw.CURSOR_NORMAL)
         glViewport(0, 0, self.config["width"], self.config["height"])
@@ -50,6 +51,9 @@ class BaseWindow:
 
     def swap(self) -> None:
         glfw.swap_buffers(self.window_handle)
+
+    def poll(self) -> None:
+        glfw.poll_events()
 
     def destroy(self) -> None:
         glfw.destroy_window(self.window_handle)

@@ -10,7 +10,8 @@ class ComputeShaderHandler(BaseShaderHandler):
     def create(
         self, shader_setting: ShaderSetting, parser: ShaderParser | None = None
     ) -> ComputeShader:
-        assert isinstance(shader_setting, ComputeShaderSetting)
+        if not isinstance(shader_setting, ComputeShaderSetting):
+            raise ValueError("ComputeShaderSetting required for ComputeShaderHandler")
         if shader_setting.id_name in self.shader_list.keys():
             return self.shader_list[shader_setting.id_name]
         shader_path: str = os.path.join(self.shader_dir, shader_setting.src)

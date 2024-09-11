@@ -31,32 +31,24 @@ class BaseProcessor:
                 shader_setting, self.shader_parser
             )
 
-    def create_set(
+    def create_sets(
         self,
         data_handler: BaseDataHandler,
-        name: str,
-        shader_func_map: Dict[str, Tuple[str, str]],
+        set_info: Dict[str, Tuple[str, str, str]] | str,
     ) -> None:
-        for shader_name, (func_name, count_func_name) in shader_func_map.items():
-            self.sets[name] = DATA_TO_SET_MAP[type(data_handler)](
+        if isinstance(set_info, str):
+            set_info = {set_info: (set_info, set_info, set_info)}
+        for set_name, (shader_name, func_name, count_func_name) in set_info.items():
+            self.sets[set_name] = DATA_TO_SET_MAP[type(data_handler)](
                 self.shaders[shader_name],
                 data_handler,
                 self.execute_funcs[func_name],
                 self.element_count_funcs[count_func_name],
             )
 
-    def create_sets(self, data_handler: BaseDataHandler) -> None:
-        for name, shader in self.shaders.items():
-            self.sets[name] = DATA_TO_SET_MAP[type(data_handler)](
-                shader,
-                data_handler,
-                self.execute_funcs[name],
-                self.element_count_funcs[name],
-            )
-
     @abc.abstractmethod
     def delete(self) -> None:
-        return
+        raise NotImplementedError
 
 
 class Renderer(BaseProcessor):
@@ -72,6 +64,9 @@ class Renderer(BaseProcessor):
 
     @abc.abstractmethod
     def render(
-        self, set_name: str, cam: Camera, config: ShaderConfig | None = None
+        self,
+        set_name: str,
+        cam: Camera | None = None,
+        config: ShaderConfig | None = None,
     ) -> None:
-        return
+        raise NotImplementedError

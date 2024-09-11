@@ -109,7 +109,8 @@ class BallRenderer(Renderer):
         self.element_count_funcs["sphere"] = generate_element_count_func(self.bdh)
         self.element_count_funcs["triangle"] = generate_element_count_func(self.bdh)
 
-        self.create_sets(self.data_handler)
+        self.create_sets(self.data_handler, "sphere")
+        self.create_sets(self.data_handler, "triangle")
 
     def render(
         self, set_name: str, cam: Camera, config: ShaderConfig | None = None
@@ -153,7 +154,7 @@ class BallProcessor(ComputeProcessor):
         self.execute_funcs["noise"] = generate_compute_func(self.shaders["noise"])
         self.element_count_funcs["noise"] = generate_element_count_func(self.bdh)
 
-        self.create_sets(self.data_handler)
+        self.create_sets(self.data_handler, "noise")
 
     def process(self, set_name: str, config: ShaderConfig | None = None) -> None:
         current_set: BaseShaderSet = self.sets[set_name]

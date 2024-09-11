@@ -35,7 +35,8 @@ class RenderShaderHandler(BaseShaderHandler):
     def create(
         self, shader_setting: ShaderSetting, parser: ShaderParser | None = None
     ) -> RenderShader:
-        assert isinstance(shader_setting, RenderShaderSetting)
+        if not isinstance(shader_setting, RenderShaderSetting):
+            raise ValueError("RenderShaderSetting required for RenderShaderHandler")
 
         if shader_setting.id_name in self.shader_list.keys():
             return self.shader_list[shader_setting.id_name]

@@ -5,6 +5,8 @@ import numpy as np
 from OpenGL.GL import *
 from PIL import Image
 
+from joulegl.utility.log_handling import LOGGER
+
 from ..utility.definitions import SCREENSHOT_PATH
 from .frame_buffer import FrameBufferObject
 
@@ -31,7 +33,7 @@ def create_screenshot(
             else frame_buffer.read()
         )
     except Exception as e:
-        print(e)
+        LOGGER.error(f"Screenshot failed: {e}")
         return
     image: Image = Image.frombuffer("RGBA", (width, height), pixel_data)
 

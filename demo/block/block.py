@@ -117,8 +117,7 @@ class BlockRenderer(Renderer):
             OGLRenderFunction.ARRAYS, GL_POINTS, depth_test=True
         )
         self.element_count_funcs["block"] = generate_element_count_func(self.bdh)
-
-        self.create_sets(self.data_handler)
+        self.create_sets(self.data_handler, "block")
 
     def render(
         self, set_name: str, cam: Camera, config: ShaderConfig | None = None

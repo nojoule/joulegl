@@ -42,6 +42,8 @@ class VertexDataHandler(BaseDataHandler):
         glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT)
         glBindVertexArray(self.handle)
         for i, (buffer, location) in enumerate(self.targeted_buffer_objects):
+            if not buffer.loaded:
+                raise AssertionError("Buffer was not initalized with data!")
             found_divisor: bool = False
             for buffer_id, divisor in self.buffer_divisor:
                 if buffer_id == i:
@@ -53,6 +55,8 @@ class VertexDataHandler(BaseDataHandler):
                 else:
                     buffer.bind(location, rendering, divisor=1)
         for buffer in self.untargeted_buffer_objects:
+            if not buffer.loaded:
+                raise AssertionError("Buffer was not initalized with data!")
             buffer.bind(0, rendering)
 
     def delete(self) -> None:
@@ -84,8 +88,12 @@ class OverflowingVertexDataHandler(VertexDataHandler):
         glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT)
         glBindVertexArray(self.handle)
         for buffer, location in self.targeted_buffer_objects:
+            if not buffer.loaded:
+                raise AssertionError("Buffer was not initalized with data!")
             buffer.bind(location)
         for buffer, location in self.targeted_overflowing_buffer_objects:
+            if not buffer.loaded:
+                raise AssertionError("Buffer was not initalized with data!")
             for i in range(count):
                 if self.current_buffer_id + i >= 0 and (
                     self.current_buffer_id + i
