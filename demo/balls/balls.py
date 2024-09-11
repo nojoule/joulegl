@@ -39,7 +39,6 @@ class BallDataHandler:
         self.ball_data: List[BallData] = []
         self.balls_changed: bool = False
         self.data: List[float] = []
-        self.buffer: bool = True
         self.buffer: SwappingBufferObject = SwappingBufferObject(
             buffer_type=BufferType.SSBO
         )

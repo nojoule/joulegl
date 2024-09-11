@@ -13,6 +13,21 @@ from joulegl.utility.window import BaseWindow
 from joulegl.utility.window_config import WindowConfig
 
 
+class GLContext:
+    def __init__(self) -> None:
+        pass
+
+    def __enter__(self):
+        glfw.init()
+        glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
+        self.window = BaseWindow(WindowConfig())
+        self.window.activate()
+
+    def __exit__(self, *args):
+        self.window.destroy()
+        glfw.terminate()
+
+
 class SampleDataHandler:
     def __init__(self, data: np.ndarray) -> None:
         self.data: np.ndarray = data
@@ -33,7 +48,7 @@ class SampleProcessor(ComputeProcessor):
         self.value = 0.25
 
         shader_settings: List[ComputeShaderSetting] = []
-        shader_settings.extend([ComputeShaderSetting("noise", ["noise.comp"], [])])
+        shader_settings.extend([ComputeShaderSetting("add", ["add.comp"], [])])
         self.set_shader(shader_settings)
 
         self.data_handler: VertexDataHandler = VertexDataHandler([(self.sdh.buffer, 0)])
@@ -50,8 +65,8 @@ class SampleProcessor(ComputeProcessor):
 
             return compute_func
 
-        self.execute_funcs["noise"] = generate_compute_func(self.shaders["noise"])
-        self.element_count_funcs["noise"] = generate_element_count_func(self.sdh)
+        self.execute_funcs["add"] = generate_compute_func(self.shaders["add"])
+        self.element_count_funcs["add"] = generate_element_count_func(self.sdh)
 
         self.create_sets(self.data_handler)
 
@@ -66,36 +81,30 @@ class SampleProcessor(ComputeProcessor):
 
 
 def test_compute_processor() -> None:
-    glfw.init()
-    glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
-    window = BaseWindow(WindowConfig())
-    window.activate()
+    with GLContext():
+        data = np.zeros(12, dtype=np.float32)
+        sdh = SampleDataHandler(data)
+        sdh.parse_to_buffer()
+        sp = SampleProcessor(sdh)
 
-    data = np.zeros(12, dtype=np.float32)
-    sdh = SampleDataHandler(data)
-    sdh.parse_to_buffer()
-    sp = SampleProcessor(sdh)
+        same_data = sdh.buffer.read()
+        assert np.array_equal(data, same_data)
 
-    same_data = sdh.buffer.read()
-    assert np.array_equal(data, same_data)
+        sp.process("add")
 
-    sp.process("noise")
+        changed_data = sdh.buffer.read()
 
-    changed_data = sdh.buffer.read()
+        assert not np.array_equal(data, changed_data)
+        assert np.all(changed_data == 0.25)
 
-    assert not np.array_equal(data, changed_data)
-    assert np.all(changed_data == 0.25)
+        sp.value = 0.5
 
-    sp.value = 0.5
+        sp.process("add")
 
-    sp.process("noise")
+        changed_data = sdh.buffer.read()
 
-    changed_data = sdh.buffer.read()
+        assert not np.array_equal(data, changed_data)
+        assert np.all(changed_data == 0.5)
 
-    assert not np.array_equal(data, changed_data)
-    assert np.all(changed_data == 0.5)
-
-    sp.delete()
-    sdh.buffer.delete()
-    window.destroy()
-    glfw.terminate()
+        sp.delete()
+        sdh.buffer.delete()
