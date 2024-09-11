@@ -108,8 +108,7 @@ class BufferObject:
         glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_RGBA32F, GL_RGBA, GL_FLOAT, None)
 
     def delete(self) -> None:
-        if not self.existing:
-            glDeleteBuffers(1, [self.handle])
+        glDeleteBuffers(1, [self.handle])
 
 
 class BufferCopy(BufferObject):
@@ -140,6 +139,9 @@ class BufferCopy(BufferObject):
     @property
     def loaded(self) -> bool:
         return self.buffer.loaded
+
+    def delete(self) -> None:
+        pass
 
 
 class SwappingBufferObject(BufferObject):
