@@ -12,7 +12,11 @@ from joulegl.opengl_helper.buffer import (
     SwappingBufferObject,
 )
 from joulegl.utility.glcontext import GLContext
-from tests.rendering.test_renderer import SampleRenderer, ScreenQuadDataHandler
+from tests.rendering.test_renderer import (
+    SampleRenderer,
+    ScreenQuadColorDataHandler,
+    ScreenQuadDataHandler,
+)
 
 
 @pytest.fixture(scope="module")
@@ -23,7 +27,12 @@ def gl_context():
 
 
 @pytest.mark.parametrize(
-    "buffer_type", [BufferType.SSBO, BufferType.ARRAY_BUFFER, BufferType.INDEX_BUFFER]
+    "buffer_type",
+    [
+        BufferType.SHADER_STORAGE_BUFFER,
+        BufferType.ARRAY_BUFFER,
+        BufferType.INDEX_BUFFER,
+    ],
 )
 def test_buffer_object(gl_context: GLContext, buffer_type: BufferType) -> None:
     data = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
@@ -42,11 +51,13 @@ def test_buffer_object(gl_context: GLContext, buffer_type: BufferType) -> None:
 
 def test_buffer_copy(gl_context: GLContext) -> None:
     data = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
-    original_buffer = BufferObject(buffer_type=BufferType.SSBO)
+    original_buffer = BufferObject(buffer_type=BufferType.SHADER_STORAGE_BUFFER)
     assert not original_buffer.loaded
     original_buffer.load(data)
 
-    buffer_copy = BufferCopy(original_buffer, buffer_type=BufferType.SSBO)
+    buffer_copy = BufferCopy(
+        original_buffer, buffer_type=BufferType.SHADER_STORAGE_BUFFER
+    )
     assert buffer_copy.handle == original_buffer.handle
     assert buffer_copy.loaded
     assert np.array_equal(buffer_copy.read(), original_buffer.read())
@@ -60,7 +71,7 @@ def test_buffer_copy(gl_context: GLContext) -> None:
 
 def test_swapping_buffer_object(gl_context: GLContext) -> None:
     data = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
-    buffer = SwappingBufferObject(buffer_type=BufferType.SSBO)
+    buffer = SwappingBufferObject(buffer_type=BufferType.SHADER_STORAGE_BUFFER)
     assert not buffer.loaded
     buffer.load(data)
 
@@ -70,6 +81,22 @@ def test_swapping_buffer_object(gl_context: GLContext) -> None:
 
     assert np.array_equal(data, swapped_data)
     assert np.array_equal(read_data, swapped_data)
+
+    buffer.swap()
+    buffer.bind(0, False)
+    handle = glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, 0)
+    assert handle == buffer.handle
+    handle = glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, 1)
+    assert handle == buffer.swap_handle
+    read_data = np.frombuffer(
+        glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, buffer.size),
+        dtype=buffer.data.dtype,
+    )
+    assert np.array_equal(read_data, data)
+
+    buffer.bind(0, True)
+    handle = glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, 0)
+    assert handle == buffer.handle
 
     buffer.clear()
     cleared_data = buffer.read()
@@ -82,7 +109,7 @@ def test_swapping_buffer_object(gl_context: GLContext) -> None:
 
 
 @pytest.mark.parametrize("max_size", [250, 2000])
-def test_overflowing_buffer_object(gl_context, max_size: int) -> None:
+def test_overflowing_buffer_object(gl_context: GLContext, max_size: int) -> None:
     def split_data(data: np.ndarray, index: int, max_size: int, object_size: int):
         start = int(index * max_size / (object_size * 4))
         end = int((index + 1) * max_size / (object_size * 4))
@@ -93,7 +120,10 @@ def test_overflowing_buffer_object(gl_context, max_size: int) -> None:
     buffer = OverflowingBufferObject(split_data, object_size=1)
     buffer.max_ssbo_size = max_size * 4  # X floats = 4 * X bytes
     buffer.load(data)
-    assert len(buffer.handle) == int(math.ceil(data_size / max_size))
+    assert len(buffer.overflowing_handles) == int(math.ceil(data_size / max_size))
+
+    for i in range(len(buffer.overflowing_handles)):
+        assert buffer.get_objects(i) == min(max_size, data_size)
 
     read_data = buffer.read()
     assert np.array_equal(data, read_data)
@@ -106,10 +136,59 @@ def test_overflowing_buffer_object(gl_context, max_size: int) -> None:
     buffer.delete()
 
 
+def test_overflowing_buffer_object_binding(gl_context: GLContext) -> None:
+    max_size = 250
+
+    def split_data(data: np.ndarray, index: int, max_size: int, object_size: int):
+        start = int(index * max_size / (object_size * 4))
+        end = int((index + 1) * max_size / (object_size * 4))
+        return data[start:end]
+
+    data_size = 1000
+    data = np.arange(data_size, dtype=np.float32)
+    buffer = OverflowingBufferObject(split_data, object_size=1)
+    buffer.max_ssbo_size = max_size * 4  # X floats = 4 * X bytes
+    buffer.load(data)
+    assert len(buffer.overflowing_handles) == int(math.ceil(data_size / max_size))
+
+    for i in range(len(buffer.overflowing_handles)):
+        buffer.bind_single(i, 0)
+        read_data = np.frombuffer(
+            glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, buffer.size),
+            dtype=buffer.data.dtype,
+        )
+        assert np.array_equal(split_data(data, i, max_size * 4, 1), read_data)
+
+    buffer.bind_consecutive(0)
+    for i in range(len(buffer.overflowing_handles)):
+        handle = glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, i)
+        assert handle == buffer.overflowing_handles[i]
+
+    buffer.delete()
+
+
+def test_overflowing_buffer_dynamically_generate_handles(gl_context: GLContext) -> None:
+    def split_data(data: np.ndarray, index: int, max_size: int, object_size: int):
+        start = int(index * max_size / (object_size * 4))
+        end = int((index + 1) * max_size / (object_size * 4))
+        return data[start:end]
+
+    data_size = 1000
+    buffer = OverflowingBufferObject(split_data, object_size=1)
+    buffer.max_ssbo_size = 250 * 4  # 250 floats = 4 * 250 bytes
+    buffer.load_empty(np.float32, data_size)
+    assert len(buffer.overflowing_handles) == int(math.ceil(data_size / 250))
+
+    read_data = buffer.read()
+    assert np.array_equal(np.zeros([data_size], dtype=np.float32), read_data)
+
+    buffer.delete()
+
+
 def test_buffer_data_too_big(gl_context: GLContext) -> None:
     data_size = 1000
     data = np.arange(data_size, dtype=np.float32)
-    buffer = BufferObject(buffer_type=BufferType.SSBO)
+    buffer = BufferObject(buffer_type=BufferType.SHADER_STORAGE_BUFFER)
     buffer.max_ssbo_size = 1000
     with pytest.raises(Exception) as e:
         buffer.load(data)
@@ -118,7 +197,12 @@ def test_buffer_data_too_big(gl_context: GLContext) -> None:
 
 
 @pytest.mark.parametrize(
-    "buffer_type", [BufferType.SSBO, BufferType.ARRAY_BUFFER, BufferType.INDEX_BUFFER]
+    "buffer_type",
+    [
+        BufferType.SHADER_STORAGE_BUFFER,
+        BufferType.ARRAY_BUFFER,
+        BufferType.INDEX_BUFFER,
+    ],
 )
 def test_buffer_type_rendering(gl_context: GLContext, buffer_type: BufferType) -> None:
     data_handler: ScreenQuadDataHandler = ScreenQuadDataHandler(buffer_type)
@@ -157,9 +241,19 @@ def test_buffer_type_rendering(gl_context: GLContext, buffer_type: BufferType) -
     data_handler.buffer.delete()
 
 
-def test_renderer_divisor(gl_context: GLContext) -> None:
+@pytest.mark.parametrize(
+    "buffer_type",
+    [
+        BufferType.SHADER_STORAGE_BUFFER,
+        BufferType.ARRAY_BUFFER,
+        BufferType.INDEX_BUFFER,
+    ],
+)
+def test_renderer_divisor(gl_context: GLContext, buffer_type: BufferType) -> None:
     data_handler: ScreenQuadDataHandler = ScreenQuadDataHandler()
-    renderer: SampleRenderer = SampleRenderer(data_handler, False, True)
+    renderer: SampleRenderer = SampleRenderer(
+        data_handler, False, ScreenQuadColorDataHandler(buffer_type)
+    )
     renderer.render(np.array([1.0, 0.0, 0.0], dtype=np.float32))
     gl_context.window.swap()
 
@@ -188,3 +282,16 @@ def test_renderer_divisor(gl_context: GLContext) -> None:
 
     renderer.delete()
     data_handler.buffer.delete()
+
+
+def test_ssbo_buffer_copy(gl_context: GLContext) -> None:
+    data = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
+    buffer = BufferObject(buffer_type=BufferType.SHADER_STORAGE_BUFFER)
+    buffer.load(data)
+
+    buffer_copy = BufferCopy(buffer, buffer_type=BufferType.ARRAY_BUFFER)
+    assert buffer_copy.handle == buffer.handle
+    assert buffer_copy.loaded
+    assert np.array_equal(buffer_copy.read(), buffer.read())
+
+    buffer.delete()

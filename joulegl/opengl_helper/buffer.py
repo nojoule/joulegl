@@ -9,7 +9,7 @@ from OpenGL.GL import *
 
 class BufferType(Enum):
     ARRAY_BUFFER: int = 0
-    SSBO: int = 1
+    SHADER_STORAGE_BUFFER: int = 1
     INDEX_BUFFER: int = 2
 
 
@@ -24,9 +24,8 @@ class BufferObject:
         self.loaded: bool = False
         self.data: np.ndarray | None = None
         self.handle: int = glGenBuffers(1)
-        self.location: int = 0
         self.buffer_type: BufferType = buffer_type
-        if self.buffer_type == BufferType.SSBO:
+        if self.buffer_type == BufferType.SHADER_STORAGE_BUFFER:
             self.size: int = 0
             self.max_ssbo_size: int = glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE)
         self.object_size: int = object_size
@@ -39,7 +38,7 @@ class BufferObject:
         self.data = data
 
         self.size = data.nbytes
-        if self.buffer_type == BufferType.SSBO:
+        if self.buffer_type == BufferType.SHADER_STORAGE_BUFFER:
             if data.nbytes > self.max_ssbo_size:
                 raise Exception(
                     "Data to big for SSBO (%d bytes, max %d bytes)."
@@ -70,7 +69,7 @@ class BufferObject:
         )
 
     def bind(self, location: int, rendering: bool = False, divisor: int = 0) -> None:
-        if self.buffer_type == BufferType.SSBO:
+        if self.buffer_type == BufferType.SHADER_STORAGE_BUFFER:
             if rendering:
                 glBindBuffer(GL_ARRAY_BUFFER, self.handle)
                 for i in range(len(self.render_data_offset)):
@@ -101,7 +100,7 @@ class BufferObject:
                 )
                 if divisor > 0:
                     glVertexAttribDivisor(location + i, divisor)
-        elif self.buffer_type == BufferType.INDEX_BUFFER:
+        else:
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.handle)
 
     def clear(self) -> None:
@@ -123,9 +122,8 @@ class BufferCopy(BufferObject):
     ) -> None:
         self.buffer = buffer
         self.handle: int = buffer.handle
-        self.location: int = 0
         self.buffer_type: BufferType = buffer_type
-        if self.buffer_type == BufferType.SSBO:
+        if self.buffer_type == BufferType.SHADER_STORAGE_BUFFER:
             self.max_ssbo_size: int = glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE)
         self.object_size: int = object_size
         self.render_data_offset: List[int] = render_data_offset
@@ -167,42 +165,13 @@ class SwappingBufferObject(BufferObject):
         super().load(data)
 
     def bind(self, location: int, rendering: bool = False, divisor: int = 0) -> None:
-        if self.buffer_type == BufferType.SSBO:
-            if rendering:
-                glBindBuffer(GL_ARRAY_BUFFER, self.handle)
-                for i in range(len(self.render_data_offset)):
-                    glEnableVertexAttribArray(location + i)
-                    glVertexAttribPointer(
-                        location + i,
-                        self.render_data_size[i],
-                        GL_FLOAT,
-                        GL_FALSE,
-                        self.object_size * 4,
-                        ctypes.c_void_p(4 * self.render_data_offset[i]),
-                    )
-                    if divisor > 0:
-                        glVertexAttribDivisor(location + i, divisor)
-            else:
-                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, location, self.handle)
-                glBindBufferBase(
-                    GL_SHADER_STORAGE_BUFFER, location + 1, self.swap_handle
-                )
-        elif self.buffer_type == BufferType.ARRAY_BUFFER:
-            glBindBuffer(GL_ARRAY_BUFFER, self.handle)
-            for i in range(len(self.render_data_offset)):
-                glEnableVertexAttribArray(location + i)
-                glVertexAttribPointer(
-                    location + i,
-                    self.render_data_size[i],
-                    GL_FLOAT,
-                    GL_FALSE,
-                    self.object_size * 4,
-                    ctypes.c_void_p(4 * self.render_data_offset[i]),
-                )
-                if divisor > 0:
-                    glVertexAttribDivisor(location + i, divisor)
-        elif self.buffer_type == BufferType.INDEX_BUFFER:
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.handle)
+        if rendering:
+            super().bind(location, True, divisor)
+        else:
+            super().bind(location, False, divisor)
+            self.swap()
+            super().bind(location + 1, False, divisor)
+            self.swap()
 
     def delete(self) -> None:
         glDeleteBuffers(1, [self.handle])
@@ -214,7 +183,7 @@ class SwappingBufferObject(BufferObject):
         super().clear()
 
 
-class OverflowingBufferObject:
+class OverflowingBufferObject(BufferObject):
     def __init__(
         self,
         data_splitting_function,
@@ -222,12 +191,15 @@ class OverflowingBufferObject:
         render_data_offset: List[int] = [0],
         render_data_size: List[int] = [4],
     ) -> None:
-        self.data: np.ndarray | None = None
-        self.loaded: bool = False
-        self.handle: List[int] = [glGenBuffers(1)]
-        self.location: int = 0
+        super().__init__(
+            BufferType.SHADER_STORAGE_BUFFER,
+            object_size,
+            render_data_offset,
+            render_data_size,
+        )
+        self.overflowing_handles: List[int] = [self.handle]
         self.overall_size: int = 0
-        self.size: List[int] = []
+        self.overflowing_sizes: List[int] = []
         self.max_ssbo_size: int = glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE)
         self.max_buffer_objects: int = glGetIntegerv(
             GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS
@@ -235,120 +207,62 @@ class OverflowingBufferObject:
         self.data_splitting_function: Callable[
             [np.ndarray, int, int, int], np.ndarray
         ] = data_splitting_function
-        self.object_size: int = object_size
-        self.render_data_offset: List[int] = render_data_offset
-        self.render_data_size: List[int] = render_data_size
 
     def load(self, data: np.ndarray) -> None:
-        self.data = data
-        glBindVertexArray(0)
-
         self.overall_size = data.nbytes
+        self.overflowing_sizes = []
         if data.nbytes > self.max_ssbo_size:
             buffer_count = math.ceil(data.nbytes / self.max_ssbo_size)
             for i in range(buffer_count):
-                if i >= len(self.handle):
-                    self.handle.append(glGenBuffers(1))
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.handle[i])
+                if i >= len(self.overflowing_handles):
+                    self.overflowing_handles.append(glGenBuffers(1))
+
                 split_data = self.data_splitting_function(
                     data, i, self.max_ssbo_size, self.object_size
                 )
-                self.size.append(split_data.nbytes)
-                glBufferData(
-                    GL_SHADER_STORAGE_BUFFER,
-                    split_data.nbytes,
-                    split_data,
-                    GL_STATIC_DRAW,
-                )
+                self.overflowing_sizes.append(split_data.nbytes)
+
+                self.handle = self.overflowing_handles[i]
+                self.size = self.overflowing_sizes[i]
+                super().load(split_data)
         else:
-            if self.size:
-                self.size[0] = data.nbytes
-            else:
-                self.size.append(data.nbytes)
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.handle[0])
-            glBufferData(GL_SHADER_STORAGE_BUFFER, data.nbytes, data, GL_STATIC_DRAW)
+            self.overflowing_sizes.append(data.nbytes)
+            super().load(data)
+        self.data = data
         self.loaded = True
 
-    def load_empty(self, dtype, size: int, component_size: int) -> None:
-        glBindVertexArray(0)
-
-        self.overall_size = size * self.object_size * 4
-        if self.overall_size > self.max_ssbo_size:
-            empty = np.zeros(int(self.max_ssbo_size / 4), dtype=dtype)
-            buffer_count = math.ceil(
-                int(size / component_size)
-                / int(self.max_ssbo_size / (component_size * self.object_size * 4))
-            )
-            logging.info("Data split into %i buffer" % buffer_count)
-            for i in range(buffer_count):
-                if i >= len(self.handle):
-                    self.handle.append(glGenBuffers(1))
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.handle[i])
-                self.size.append(empty.nbytes)
-                glBufferData(
-                    GL_SHADER_STORAGE_BUFFER, empty.nbytes, empty, GL_STATIC_DRAW
-                )
-        else:
-            empty = np.zeros(size * self.object_size, dtype=dtype)
-            self.size.append(empty.nbytes)
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.handle[0])
-            glBufferData(GL_SHADER_STORAGE_BUFFER, empty.nbytes, empty, GL_STATIC_DRAW)
-        self.loaded = True
+    def load_empty(self, dtype, size: int) -> None:
+        empty = np.zeros(size, dtype=dtype)
+        self.load(empty)
 
     def read(self) -> any:
-        data = None
-        for i, buffer in enumerate(self.handle):
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer)
-            if data is None:
-                data = np.frombuffer(
-                    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, self.size[i]),
-                    dtype=self.data.dtype,
-                )
-            else:
-                data = np.concatenate(
-                    (
-                        data,
-                        np.frombuffer(
-                            glGetBufferSubData(
-                                GL_SHADER_STORAGE_BUFFER, 0, self.size[i]
-                            ),
-                            dtype=self.data.dtype,
-                        ),
-                    )
-                )
+        data = np.array([], dtype=self.data.dtype)
+        for i, handle in enumerate(self.overflowing_handles):
+            self.handle = handle
+            self.size = self.overflowing_sizes[i]
+            split_data = super().read()
+            data = np.concatenate([data, split_data])
         return data
 
     def bind_single(
         self, buffer_id: int, location: int, rendering: bool = False, divisor: int = 0
     ) -> None:
-        if rendering:
-            glBindBuffer(GL_ARRAY_BUFFER, self.handle[buffer_id])
-            for i in range(len(self.render_data_offset)):
-                glEnableVertexAttribArray(location + i)
-                glVertexAttribPointer(
-                    location + i,
-                    self.render_data_size[i],
-                    GL_FLOAT,
-                    GL_FALSE,
-                    self.object_size * 4,
-                    ctypes.c_void_p(4 * self.render_data_offset[i]),
-                )
-                if divisor > 0:
-                    glVertexAttribDivisor(location + i, divisor)
-        else:
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, location, self.handle[buffer_id])
+        self.handle = self.overflowing_handles[buffer_id]
+        self.size = self.overflowing_sizes[buffer_id]
+        self.bind(location, rendering, divisor)
 
     def bind_consecutive(self, location: int) -> None:
-        for i, buffer in enumerate(self.handle):
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, location + i, buffer)
+        for i, handle in enumerate(self.overflowing_handles):
+            self.handle = handle
+            self.size = self.overflowing_sizes[i]
+            self.bind(location + i)
 
     def clear(self) -> None:
-        self.load_empty(self.data.dtype, len(self.data), self.object_size)
+        self.load_empty(self.data.dtype, len(self.data))
 
     def delete(self) -> None:
-        for buffer in self.handle:
-            glDeleteBuffers(1, [buffer])
-        self.handle = []
+        for handle in self.overflowing_handles:
+            glDeleteBuffers(1, [handle])
 
     def get_objects(self, buffer_id: int = 0) -> int:
-        return int(self.size[buffer_id] / (self.object_size * 4))
+        return int(self.overflowing_sizes[buffer_id] / (self.object_size * 4))

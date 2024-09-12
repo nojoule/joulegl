@@ -40,7 +40,7 @@ class BallDataHandler:
         self.balls_changed: bool = False
         self.data: List[float] = []
         self.buffer: SwappingBufferObject = SwappingBufferObject(
-            buffer_type=BufferType.SSBO
+            buffer_type=BufferType.SHADER_STORAGE_BUFFER
         )
 
     def get_buffer_points(self) -> int:

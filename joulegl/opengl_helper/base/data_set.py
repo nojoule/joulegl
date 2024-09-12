@@ -105,7 +105,11 @@ class OverflowingSet(BaseShaderSet):
         if self.shader is not None:
             self.shader.use()
             for i in range(
-                len(self.data_handler.targeted_overflowing_buffer_objects[0][0].handle)
+                len(
+                    self.data_handler.targeted_overflowing_buffer_objects[0][
+                        0
+                    ].overflowing_handles
+                )
             ):
                 self.data_handler.set_buffer(i)
                 self.data_handler.set(render)

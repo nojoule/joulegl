@@ -74,16 +74,16 @@ class SampleRenderer(Renderer):
         self,
         data: ScreenQuadDataHandler,
         use_implicit_set_name: bool = True,
-        use_color_buffer: bool = False,
+        color_buffer: ScreenQuadColorDataHandler | None = None,
     ) -> None:
         super().__init__()
 
         self.data: ScreenQuadDataHandler = data
-        if use_color_buffer:
-            self.color_data: ScreenQuadColorDataHandler = ScreenQuadColorDataHandler()
+        if color_buffer:
+            self.color_data: ScreenQuadColorDataHandler = color_buffer
 
         shader_settings: List[RenderShaderSetting] = []
-        if use_color_buffer:
+        if color_buffer:
             shader_settings.extend(
                 [
                     RenderShaderSetting(
@@ -109,7 +109,7 @@ class SampleRenderer(Renderer):
             )
         self.set_shader(shader_settings)
 
-        if use_color_buffer:
+        if color_buffer:
             self.data_handler: VertexDataHandler = VertexDataHandler(
                 [(self.data.buffer, 0), (self.color_data.buffer, 1)], [(0, 0), (1, 1)]
             )
@@ -119,14 +119,14 @@ class SampleRenderer(Renderer):
             )
 
         def generate_element_count_func(dh: ScreenQuadDataHandler) -> Callable:
-            count = 2 if use_color_buffer else 6
+            count = 2 if color_buffer else 6
 
             def element_count_func() -> int:
                 return count  # dh.get_buffer_points()
 
             return element_count_func
 
-        if use_color_buffer:
+        if color_buffer:
             self.execute_funcs["screen_quad"] = generate_render_function(
                 OGLRenderFunction.ARRAYS_INSTANCED, GL_TRIANGLES, instance_vertices=6
             )

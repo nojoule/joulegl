@@ -25,7 +25,9 @@ def gl_context() -> Generator[GLContext, None, None]:
 class SampleDataHandler:
     def __init__(self, data: np.ndarray) -> None:
         self.data: np.ndarray = data
-        self.buffer: BufferObject = BufferObject(buffer_type=BufferType.SSBO)
+        self.buffer: BufferObject = BufferObject(
+            buffer_type=BufferType.SHADER_STORAGE_BUFFER
+        )
 
     def get_buffer_points(self) -> int:
         return len(self.data)
