@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, List, Union
+from typing import Any, Callable, List, Union
 
 from OpenGL.GL import *
 
@@ -17,18 +17,20 @@ class OGLRenderFunction(Enum):
 
 def generate_render_function(
     ogl_func: OGLRenderFunction,
-    primitive: any,
+    primitive: Any,
     point_size: float | None = None,
     line_width: float | None = None,
     add_blending: bool = False,
     depth_test: bool = False,
+    instance_vertices: int = 1,
 ) -> Callable:
     ogl_func: OGLRenderFunction = ogl_func
-    primitive: any = primitive
+    primitive: Any = primitive
     point_size: float = point_size
     line_width: float = line_width
     add_blending: bool = add_blending
     depth_test: bool = depth_test
+    instance_vertices: int = instance_vertices
 
     def render_func(element_count: int, _=None) -> None:
         if add_blending:
@@ -51,7 +53,7 @@ def generate_render_function(
         if ogl_func is OGLRenderFunction.ARRAYS:
             glDrawArrays(primitive, 0, element_count)
         elif ogl_func is OGLRenderFunction.ARRAYS_INSTANCED:
-            glDrawArraysInstanced(primitive, 0, 1, element_count)
+            glDrawArraysInstanced(primitive, 0, instance_vertices, element_count)
         elif ogl_func is OGLRenderFunction.ELEMENTS:
             glDrawElements(primitive, element_count, GL_UNSIGNED_INT, None)
 

@@ -1,7 +1,8 @@
-from typing import Callable, List
+from typing import Callable, Generator, List
 
 import glfw
 import numpy as np
+import pytest
 
 from joulegl.opengl_helper.base.config import ShaderConfig
 from joulegl.opengl_helper.base.data_set import BaseShaderSet
@@ -12,6 +13,13 @@ from joulegl.processing.processor import ComputeProcessor
 from joulegl.utility.glcontext import GLContext
 from joulegl.utility.window import BaseWindow
 from joulegl.utility.window_config import WindowConfig
+
+
+@pytest.fixture(scope="module")
+def gl_context() -> Generator[GLContext, None, None]:
+    context = GLContext()
+    with context:
+        yield context
 
 
 class SampleDataHandler:
@@ -66,31 +74,30 @@ class SampleProcessor(ComputeProcessor):
         self.data_handler.delete()
 
 
-def test_compute_processor() -> None:
-    with GLContext():
-        data = np.zeros(12, dtype=np.float32)
-        sdh = SampleDataHandler(data)
-        sdh.parse_to_buffer()
-        sp = SampleProcessor(sdh)
+def test_compute_processor(gl_context: GLContext) -> None:
+    data = np.zeros(12, dtype=np.float32)
+    sdh = SampleDataHandler(data)
+    sdh.parse_to_buffer()
+    sp = SampleProcessor(sdh)
 
-        same_data = sdh.buffer.read()
-        assert np.array_equal(data, same_data)
+    same_data = sdh.buffer.read()
+    assert np.array_equal(data, same_data)
 
-        sp.process("add")
+    sp.process("add")
 
-        changed_data = sdh.buffer.read()
+    changed_data = sdh.buffer.read()
 
-        assert not np.array_equal(data, changed_data)
-        assert np.all(changed_data == 0.25)
+    assert not np.array_equal(data, changed_data)
+    assert np.all(changed_data == 0.25)
 
-        sp.value = 0.5
+    sp.value = 0.5
 
-        sp.process("add")
+    sp.process("add")
 
-        changed_data = sdh.buffer.read()
+    changed_data = sdh.buffer.read()
 
-        assert not np.array_equal(data, changed_data)
-        assert np.all(changed_data == 0.5)
+    assert not np.array_equal(data, changed_data)
+    assert np.all(changed_data == 0.5)
 
-        sp.delete()
-        sdh.buffer.delete()
+    sp.delete()
+    sdh.buffer.delete()

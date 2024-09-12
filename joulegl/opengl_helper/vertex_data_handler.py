@@ -24,8 +24,8 @@ class VertexDataHandler(BaseDataHandler):
     def __init__(
         self,
         targeted_buffer_objects: List[Tuple[BufferObject, int]],
-        buffer_divisor: List[Tuple[int, int]] | None = None,
-        untargeted_buffer_objects: List[BufferObject] | None = [],
+        buffer_divisor: List[Tuple[int, int]] = [],
+        untargeted_buffer_objects: List[BufferObject] = [],
     ) -> None:
         super().__init__()
         self.handle: int = glGenVertexArrays(1)
@@ -33,10 +33,7 @@ class VertexDataHandler(BaseDataHandler):
             targeted_buffer_objects
         )
         self.untargeted_buffer_objects: List[BufferObject] = untargeted_buffer_objects
-        if buffer_divisor is None:
-            self.buffer_divisor: List[Tuple[int, int]] = []
-        else:
-            self.buffer_divisor: List[Tuple[int, int]] = buffer_divisor
+        self.buffer_divisor: List[Tuple[int, int]] = buffer_divisor
 
     def set(self, rendering: bool = False) -> None:
         glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT)
@@ -68,7 +65,7 @@ class OverflowingVertexDataHandler(VertexDataHandler):
         self,
         targeted_buffer_objects: List[Tuple[BufferObject, int]],
         targeted_overflowing_buffer_objects: List[Tuple[OverflowingBufferObject, int]],
-        buffer_divisor: List[Tuple[int, int]] | None = None,
+        buffer_divisor: List[Tuple[int, int]] = [],
     ) -> None:
         super().__init__(targeted_buffer_objects, buffer_divisor)
         self.targeted_overflowing_buffer_objects: List[

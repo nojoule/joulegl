@@ -49,8 +49,6 @@ class BallDataHandler:
     def parse_to_buffer(self) -> None:
         self.data = [float(value) for ball in self.ball_data for value in ball.data]
         self.buffer.load(np.array(self.data, dtype=np.float32))
-        self.buffer.swap()
-        self.buffer.load(np.array(self.data, dtype=np.float32))
 
     def apply(self, balls: List[BallData]) -> None:
         self.balls_changed = True
