@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from ...utility.config import BaseConfig
 
@@ -22,14 +22,14 @@ class ShaderConfig(BaseConfig):
         self.shader_label: Dict[str, str] = dict()
         self.shader_name: Dict[str, str] = dict()
         self.selection_labels: Dict[str, List[str]] = dict()
-        self.selection_values: Dict[str, List[any]] = dict()
+        self.selection_values: Dict[str, List[Any]] = dict()
         self.item_type: Dict[str, ShaderConfigType] = dict()
         self.set_defaults()
 
     def set_items(
         self,
-        shader_items: List[Tuple[str, str, str, any]],
-        selection_items: List[Tuple[str, List[str], List[any], int]] | None = None,
+        shader_items: List[Tuple[str, str, str, Any]],
+        selection_items: List[Tuple[str, List[str], List[Any], int]] | None = None,
     ) -> None:
         for key, shader_name, label, value in shader_items:
             self.shader_label[key] = label
@@ -44,7 +44,7 @@ class ShaderConfig(BaseConfig):
             self.setdefault(key, default)
 
     def set_defaults(self) -> None:
-        shader_items: List[Tuple[str, str, str, any]] = []
+        shader_items: List[Tuple[str, str, str, Any]] = []
         shader_items.extend(
             [
                 ("screen_width", "screen_width", "Screen Width", 1920.0),
@@ -52,6 +52,6 @@ class ShaderConfig(BaseConfig):
             ]
         )
 
-        selection_items: List[Tuple[str, List[str], List[any], int]] = []
+        selection_items: List[Tuple[str, List[str], List[Any], int]] = []
         selection_items.extend([])
         self.set_items(shader_items, selection_items)

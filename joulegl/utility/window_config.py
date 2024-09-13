@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 from .config import BaseConfig
 
@@ -14,7 +14,7 @@ class WindowConfig(BaseConfig):
         self.set_defaults()
 
     def set_defaults(self) -> None:
-        render_setting_items: List[Tuple[str, any]] = []
+        render_setting_items: List[Tuple[str, Any]] = []
         render_setting_items.extend(
             [
                 ("title", self.title),

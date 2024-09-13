@@ -2,7 +2,11 @@ import os
 import sys
 from typing import Generator, Tuple, TypeVar
 
-BASE_PATH = os.path.dirname(sys.modules["__main__"].__file__)
+BASE_PATH = (
+    os.path.dirname(sys.modules["__main__"].__file__)
+    if os.environ.get("TESTING") is None
+    else "tests/tmp"
+)
 
 SHADER_PATH = (
     os.path.join(BASE_PATH, "shader")

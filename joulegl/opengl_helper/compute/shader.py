@@ -1,5 +1,5 @@
 import math
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
@@ -28,7 +28,7 @@ class ComputeShader(BaseShader):
             compileShader(shader_src, GL_COMPUTE_SHADER)
         )
         self.textures: List[Tuple[Texture, str, int]] = []
-        self.uniform_cache: Dict[str, Tuple[int, any, any]] = dict()
+        self.uniform_cache: Dict[str, Tuple[int, Any, Any]] = dict()
         self.max_workgroup_size: int = glGetIntegeri_v(
             GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0
         )[0]

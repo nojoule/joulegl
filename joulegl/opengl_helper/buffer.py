@@ -235,7 +235,7 @@ class OverflowingBufferObject(BufferObject):
         empty = np.zeros(size, dtype=dtype)
         self.load(empty)
 
-    def read(self) -> any:
+    def read(self) -> np.ndarray:
         data = np.array([], dtype=self.data.dtype)
         for i, handle in enumerate(self.overflowing_handles):
             self.handle = handle

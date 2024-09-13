@@ -1,5 +1,5 @@
 import abc
-from typing import Callable, List, Tuple
+from typing import Any, Callable, List, Tuple
 
 from ..vertex_data_handler import (
     LayeredVertexDataHandler,
@@ -24,7 +24,7 @@ class BaseShaderSet:
         if self.shader is not None:
             self.shader.set_uniform_label(data)
 
-    def set_uniform_data(self, data: List[Tuple[str, any, any]]) -> None:
+    def set_uniform_data(self, data: List[Tuple[str, Any, Any]]) -> None:
         if self.shader is not None:
             self.shader.set_uniform_data(data)
 

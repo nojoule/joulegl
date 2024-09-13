@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 VAR_GROUP_CONFLICT: str = (
     "Can't replace multiple dynamic variables in danymic shader src. Last group: {}, conflicting group: {}"
@@ -19,7 +19,7 @@ class ShaderParser:
         self.dynamic_id_var_map: Dict[str, int] = dict()
         self.dynamic_var_map: Dict[str, Tuple[str, List[str]]] = dict()
 
-    def set_static(self, static_vars: Dict[str, any]) -> None:
+    def set_static(self, static_vars: Dict[str, Any]) -> None:
         for key, value in static_vars.items():
             self.static_var_map["${}$".format(key)] = str(value)
 

@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime, timezone
 from functools import reduce
-from typing import Dict
+from typing import Any, Dict
 
 from .definitions import BASE_PATH
 from .singleton import Singleton
@@ -13,7 +13,7 @@ class FileHandler(metaclass=Singleton):
         self.data_path: str = (
             os.path.join(BASE_PATH, "data") if data_path is None else data_path
         )
-        self.stats_cache: Dict[str, Dict[str, Dict[str, any]]] = dict()
+        self.stats_cache: Dict[str, Dict[str, Dict[str, Any]]] = dict()
         self.stats_cache["default"] = dict()
         self.day_key: str = datetime.utcfromtimestamp(
             datetime.timestamp(datetime.now().replace(tzinfo=timezone.utc).astimezone())
@@ -48,7 +48,7 @@ class FileHandler(metaclass=Singleton):
                 pass
 
     def append_statistics(
-        self, data: Dict[str, any], app_name: str | None = None
+        self, data: Dict[str, Any], app_name: str | None = None
     ) -> None:
         stats_prefix: str = "default" if app_name is None else app_name
         if stats_prefix not in self.stats_cache.keys():

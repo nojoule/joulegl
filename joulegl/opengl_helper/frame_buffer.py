@@ -1,3 +1,4 @@
+import numpy as np
 from OpenGL.GL import *
 
 
@@ -29,7 +30,7 @@ class FrameBufferObject:
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
-    def read(self) -> any:
+    def read(self) -> np.ndarray:
         glPixelStorei(GL_PACK_ALIGNMENT, 1)
         glReadBuffer(GL_COLOR_ATTACHMENT0)
         data = glReadPixels(0, 0, self.width, self.height, GL_RGBA, GL_UNSIGNED_BYTE)

@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 from OpenGL.GL import *
 
@@ -52,7 +52,7 @@ class BaseShader:
     def __init__(self) -> None:
         self.shader_handle: int = 0
         self.textures: List[Tuple[Texture, str, int]] = []
-        self.uniform_cache: Dict[str, Tuple[int, any, Callable]] = dict()
+        self.uniform_cache: Dict[str, Tuple[int, Any, Callable]] = dict()
         self.uniform_labels: List[str] = []
         self.uniform_ignore_labels: List[str] = []
 
@@ -68,7 +68,7 @@ class BaseShader:
                     uniform_data.append((shader_name, config[setting], "float"))
             self.set_uniform_data(uniform_data)
 
-    def set_uniform_data(self, data: List[Tuple[str, any, any]]) -> None:
+    def set_uniform_data(self, data: List[Tuple[str, Any, Any]]) -> None:
         program_is_set: bool = False
         for uniform_name, uniform_data, uniform_setter in data:
             if uniform_name not in self.uniform_ignore_labels:
