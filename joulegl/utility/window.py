@@ -83,6 +83,26 @@ class Window(BaseWindow):
         self.record: bool = False
         self.frame_id: int = 0
 
+        self.camera_movement_map: Dict[int, np.ndarray] = {
+            glfw.KEY_W: np.array([0, 0, 1], dtype=np.float32),
+            glfw.KEY_S: np.array([0, 0, -1], dtype=np.float32),
+            glfw.KEY_A: np.array([-1, 0, 0], dtype=np.float32),
+            glfw.KEY_D: np.array([1, 0, 0], dtype=np.float32),
+        }
+
+        self.camera_position_map: Dict[int, CameraPose] = {
+            glfw.KEY_0: CameraPose.LEFT,
+            glfw.KEY_1: CameraPose.FRONT,
+            glfw.KEY_2: CameraPose.RIGHT,
+            glfw.KEY_3: CameraPose(CameraPose.BACK | CameraPose.LEFT),
+            glfw.KEY_4: CameraPose(CameraPose.FRONT | CameraPose.LEFT),
+            glfw.KEY_5: CameraPose(CameraPose.UP | CameraPose.BACK | CameraPose.RIGHT),
+            glfw.KEY_6: CameraPose(CameraPose.UP | CameraPose.BACK | CameraPose.LEFT),
+            glfw.KEY_7: CameraPose(CameraPose.DOWN | CameraPose.BACK | CameraPose.LEFT),
+            glfw.KEY_8: CameraPose.BACK,
+            glfw.KEY_9: CameraPose.LEFT,
+        }
+
     def set_size(self, width: float, height: float) -> None:
         super().set_size(width, height)
         self.cam.set_size(width, height)
@@ -149,22 +169,12 @@ class Window(BaseWindow):
 
             if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
                 glfw.set_window_should_close(glfw_window, True)
-            if key == glfw.KEY_W and action == glfw.PRESS:
-                self.cam.move(np.array([0, 0, 1], dtype=np.float32))
-            elif key == glfw.KEY_W and action == glfw.RELEASE:
-                self.cam.stop(np.array([0, 0, 1], dtype=np.float32))
-            if key == glfw.KEY_S and action == glfw.PRESS:
-                self.cam.move(np.array([0, 0, -1], dtype=np.float32))
-            elif key == glfw.KEY_S and action == glfw.RELEASE:
-                self.cam.stop(np.array([0, 0, -1], dtype=np.float32))
-            if key == glfw.KEY_A and action == glfw.PRESS:
-                self.cam.move(np.array([-1, 0, 0], dtype=np.float32))
-            elif key == glfw.KEY_A and action == glfw.RELEASE:
-                self.cam.stop(np.array([-1, 0, 0], dtype=np.float32))
-            if key == glfw.KEY_D and action == glfw.PRESS:
-                self.cam.move(np.array([1, 0, 0], dtype=np.float32))
-            elif key == glfw.KEY_D and action == glfw.RELEASE:
-                self.cam.stop(np.array([1, 0, 0], dtype=np.float32))
+
+            if key in self.camera_movement_map:
+                if action == glfw.PRESS:
+                    self.cam.move(self.camera_movement_map[key])
+                elif action == glfw.RELEASE:
+                    self.cam.stop(self.camera_movement_map[key])
 
             if key == glfw.KEY_F and action == glfw.RELEASE:
                 self.freeze = not self.freeze
@@ -180,32 +190,9 @@ class Window(BaseWindow):
             if key == glfw.KEY_R and action == glfw.RELEASE:
                 self.record = not self.record
 
-            if key == glfw.KEY_0 and action == glfw.RELEASE:
-                self.cam.set_position(CameraPose.LEFT)
-            if key == glfw.KEY_1 and action == glfw.RELEASE:
-                self.cam.set_position(CameraPose.FRONT)
-            if key == glfw.KEY_2 and action == glfw.RELEASE:
-                self.cam.set_position(CameraPose.RIGHT)
-            if key == glfw.KEY_3 and action == glfw.RELEASE:
-                self.cam.set_position(CameraPose(CameraPose.BACK | CameraPose.LEFT))
-            if key == glfw.KEY_4 and action == glfw.RELEASE:
-                self.cam.set_position(CameraPose(CameraPose.FRONT | CameraPose.LEFT))
-            if key == glfw.KEY_5 and action == glfw.RELEASE:
-                self.cam.set_position(
-                    CameraPose(CameraPose.UP | CameraPose.BACK | CameraPose.RIGHT)
-                )
-            if key == glfw.KEY_6 and action == glfw.RELEASE:
-                self.cam.set_position(
-                    CameraPose(CameraPose.UP | CameraPose.BACK | CameraPose.LEFT)
-                )
-            if key == glfw.KEY_7 and action == glfw.RELEASE:
-                self.cam.set_position(
-                    CameraPose(CameraPose.DOWN | CameraPose.BACK | CameraPose.LEFT)
-                )
-            if key == glfw.KEY_8 and action == glfw.RELEASE:
-                self.cam.set_position(CameraPose.BACK)
-            if key == glfw.KEY_9 and action == glfw.RELEASE:
-                self.cam.set_position(CameraPose.LEFT)
+            if key in self.camera_position_map:
+                if action == glfw.RELEASE:
+                    self.cam.set_position(self.camera_position_map[key])
 
         glfw.set_window_size_callback(self.window_handle, resize_clb)
         glfw.set_framebuffer_size_callback(self.window_handle, frame_resize_clb)
@@ -233,7 +220,7 @@ class WindowHandler:
         self.windows: Dict[str, Window] = dict()
 
         if not glfw.init():
-            pass  # raise Exception("glfw can not be initialized!")
+            raise Exception("glfw can not be initialized!")
 
     def create_window(
         self,
