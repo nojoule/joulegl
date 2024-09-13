@@ -8,7 +8,7 @@ from .definitions import BASE_PATH
 from .singleton import Singleton
 
 
-class FileHandler(metaclass=Singleton):
+class StatsFileHandler(metaclass=Singleton):
     def __init__(self, data_path: str | None = None) -> None:
         self.data_path: str = (
             os.path.join(BASE_PATH, "data") if data_path is None else data_path
@@ -18,9 +18,10 @@ class FileHandler(metaclass=Singleton):
         self.day_key: str = datetime.utcfromtimestamp(
             datetime.timestamp(datetime.now().replace(tzinfo=timezone.utc).astimezone())
         ).strftime("%Y-%m-%d")
+        os.makedirs(self.data_path, exist_ok=True)
         os.makedirs(os.path.join(self.data_path, "stats"), exist_ok=True)
 
-    def read_statistics(self, app_name: str | None = None) -> None:
+    def load_statistics(self, app_name: str | None = None) -> None:
         stats_prefix: str = "default" if app_name is None else app_name
         try:
             with open(
@@ -34,10 +35,10 @@ class FileHandler(metaclass=Singleton):
                     self.stats_cache[stats_prefix] = json.loads(file_data)
                     for name, stat in self.stats_cache[stats_prefix].items():
                         for time, time_stat_slice in stat.items():
-                            if type(time_stat_slice) != "list":
-                                self.stats_cache[stats_prefix][name][time] = [
-                                    time_stat_slice
-                                ]
+                            assert type(time_stat_slice) != "list"
+                            self.stats_cache[stats_prefix][name][time] = [
+                                time_stat_slice
+                            ]
         except FileNotFoundError:
             with open(
                 os.path.join(
@@ -62,8 +63,9 @@ class FileHandler(metaclass=Singleton):
             if name not in self.stats_cache[stats_prefix].keys():
                 self.stats_cache[stats_prefix][name] = dict()
             if time_key not in self.stats_cache[stats_prefix][name].keys():
-                self.stats_cache[stats_prefix][name][time_key] = []
-            self.stats_cache[stats_prefix][name][time_key].append(stat)
+                self.stats_cache[stats_prefix][name][time_key] = [stat]
+            else:
+                self.stats_cache[stats_prefix][name][time_key].append(stat)
 
     def write_statistics(self, app_name: str | None = None) -> None:
         stats_prefix: str = "default" if app_name is None else app_name
@@ -110,9 +112,5 @@ class DictFile:
         return data
 
     def write_data(self, data: Dict) -> None:
-        try:
-            with open(self.file_path, "w+") as file_data:
-                json.dump(data, file_data, sort_keys=True, indent=4)
-        except FileNotFoundError:
-            with open(self.file_path, "w+") as file_data:
-                json.dump(data, file_data, sort_keys=True, indent=4)
+        with open(self.file_path, "w+") as file_data:
+            json.dump(data, file_data, sort_keys=True, indent=4)

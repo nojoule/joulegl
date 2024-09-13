@@ -2,19 +2,13 @@ import os
 import sys
 from typing import Generator, Tuple, TypeVar
 
-BASE_PATH = (
-    os.path.dirname(sys.modules["__main__"].__file__)
-    if os.environ.get("TESTING") is None
-    else "tests/tmp"
-)
+BASE_PATH = os.getcwd() if os.environ.get("TESTING") is None else "tests/tmp"
 
 SHADER_PATH = (
-    os.path.join(BASE_PATH, "shader")
+    os.path.join(os.path.dirname(sys.modules["__main__"].__file__), "shader")
     if os.environ.get("TESTING") is None
     else "tests/shader"
 )
-
-# if the environment is set to TESTING, the path will be set to tests/tmp
 
 SCREENSHOT_PATH = (
     os.path.join(BASE_PATH, "screenshots")

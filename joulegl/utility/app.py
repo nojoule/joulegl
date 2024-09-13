@@ -9,7 +9,7 @@ from joulegl.utility.performance import Timed
 from ..opengl_helper.render.utility import clear_screen
 from ..opengl_helper.screenshot import create_screenshot
 from .camera import CameraPose
-from .file import FileHandler
+from .file import StatsFileHandler
 from .log_handling import LOGGER
 from .window import Window, WindowHandler
 
@@ -19,7 +19,7 @@ class App(Timed):
         super().__init__()
         self.title: str = app_name
         self.name = app_name.lower().replace(" ", "-")
-        FileHandler(data_path=os.getcwd()).read_statistics(app_name=self.name)
+        StatsFileHandler().load_statistics(app_name=self.name)
 
         self.window_handler: WindowHandler = WindowHandler()
         self.window: Window = self.window_handler.create_window(
@@ -88,5 +88,5 @@ class App(Timed):
         self.closed = True
 
     def cleanup(self) -> None:
-        FileHandler(data_path=os.getcwd()).write_statistics(app_name=self.name)
+        StatsFileHandler(data_path=os.getcwd()).write_statistics(app_name=self.name)
         self.window_handler.close(self.window)

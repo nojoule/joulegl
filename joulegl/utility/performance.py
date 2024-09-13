@@ -2,7 +2,7 @@ import os
 import time
 from typing import Any, Callable
 
-from .file import FileHandler
+from .file import StatsFileHandler
 
 running_times = []
 
@@ -25,7 +25,7 @@ def track_time(
             running_times = [start_time + time_diff for start_time in running_times]
             stats = dict()
             stats[func.__name__] = time_diff
-            FileHandler(data_path=os.getcwd()).append_statistics(
+            StatsFileHandler(data_path=os.getcwd()).append_statistics(
                 stats, app_name=app_name
             )
             return result
