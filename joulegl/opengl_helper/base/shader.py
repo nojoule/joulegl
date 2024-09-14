@@ -1,3 +1,4 @@
+import abc
 from typing import Any, Callable, Dict, List, Tuple
 
 from OpenGL.GL import *
@@ -13,25 +14,25 @@ def uniform_setter_function(uniform_setter: str) -> Callable:
             glUniform1f(location, data)
 
         return uniform_func
-    if uniform_setter == "vec3":
+    elif uniform_setter == "vec3":
 
         def uniform_func(location: int, data: List[float]) -> None:
             glUniform3fv(location, 1, data)
 
         return uniform_func
-    if uniform_setter == "mat4":
+    elif uniform_setter == "mat4":
 
         def uniform_func(location: int, data: List[float]) -> None:
             glUniformMatrix4fv(location, 1, GL_FALSE, data)
 
         return uniform_func
-    if uniform_setter == "int":
+    elif uniform_setter == "int":
 
         def uniform_func(location: int, data: int) -> None:
             glUniform1i(location, data)
 
         return uniform_func
-    if uniform_setter == "ivec3":
+    elif uniform_setter == "ivec3":
 
         def uniform_func(location: int, data: List[int]) -> None:
             glUniform3iv(location, 1, data)
@@ -50,6 +51,7 @@ class ShaderSetting:
 
 class BaseShader:
     def __init__(self) -> None:
+        __metaclass__ = abc.ABCMeta
         self.shader_handle: int = 0
         self.textures: List[Tuple[Texture, str, int]] = []
         self.uniform_cache: Dict[str, Tuple[int, Any, Callable]] = dict()
@@ -98,5 +100,6 @@ class BaseShader:
     def set_textures(self, textures: List[Tuple[Texture, str, int]]) -> None:
         self.textures: List[Tuple[Texture, str, int]] = textures
 
+    @abc.abstractmethod
     def use(self) -> None:
         pass
