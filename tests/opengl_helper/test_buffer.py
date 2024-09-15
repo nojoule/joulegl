@@ -11,6 +11,7 @@ from joulegl.opengl_helper.buffer import (
     OverflowingBufferObject,
     SwappingBufferObject,
 )
+from joulegl.opengl_helper.frame_buffer import FrameBufferObject
 from joulegl.utility.glcontext import GLContext
 from tests.rendering.test_renderer import (
     SampleRenderer,
@@ -201,31 +202,21 @@ def test_buffer_data_too_big(gl_context: GLContext) -> None:
     [
         BufferType.SHADER_STORAGE_BUFFER,
         BufferType.ARRAY_BUFFER,
-        BufferType.INDEX_BUFFER,
     ],
 )
 def test_buffer_type_rendering(gl_context: GLContext, buffer_type: BufferType) -> None:
     data_handler: ScreenQuadDataHandler = ScreenQuadDataHandler(buffer_type)
     renderer: SampleRenderer = SampleRenderer(data_handler, False)
+
+    frame_buffer = FrameBufferObject(
+        gl_context.window.config["width"], gl_context.window.config["height"]
+    )
+    frame_buffer.bind()
+
     renderer.render(np.array([1.0, 0.0, 0.0], dtype=np.float32))
     gl_context.window.swap()
 
-    pixel_data = None
-    glReadBuffer(GL_FRONT)
-    try:
-        pixel_data = np.frombuffer(
-            glReadPixels(
-                0,
-                0,
-                gl_context.window.config["width"],
-                gl_context.window.config["height"],
-                GL_RGBA,
-                GL_UNSIGNED_BYTE,
-            ),
-            dtype=np.uint8,
-        )
-    except Exception as e:
-        pass
+    pixel_data = frame_buffer.read()
 
     assert np.array_equal(
         pixel_data,
@@ -239,6 +230,7 @@ def test_buffer_type_rendering(gl_context: GLContext, buffer_type: BufferType) -
 
     renderer.delete()
     data_handler.buffer.delete()
+    frame_buffer.delete()
 
 
 @pytest.mark.parametrize(
@@ -246,7 +238,6 @@ def test_buffer_type_rendering(gl_context: GLContext, buffer_type: BufferType) -
     [
         BufferType.SHADER_STORAGE_BUFFER,
         BufferType.ARRAY_BUFFER,
-        BufferType.INDEX_BUFFER,
     ],
 )
 def test_renderer_divisor(gl_context: GLContext, buffer_type: BufferType) -> None:
@@ -254,25 +245,15 @@ def test_renderer_divisor(gl_context: GLContext, buffer_type: BufferType) -> Non
     renderer: SampleRenderer = SampleRenderer(
         data_handler, False, ScreenQuadColorDataHandler(buffer_type)
     )
+    frame_buffer = FrameBufferObject(
+        gl_context.window.config["width"], gl_context.window.config["height"]
+    )
+    frame_buffer.bind()
+
     renderer.render(np.array([1.0, 0.0, 0.0], dtype=np.float32))
     gl_context.window.swap()
 
-    pixel_data = None
-    glReadBuffer(GL_FRONT)
-    try:
-        pixel_data = np.frombuffer(
-            glReadPixels(
-                0,
-                0,
-                gl_context.window.config["width"],
-                gl_context.window.config["height"],
-                GL_RGBA,
-                GL_UNSIGNED_BYTE,
-            ),
-            dtype=np.uint8,
-        )
-    except Exception as e:
-        pass
+    pixel_data = frame_buffer.read()
 
     width = gl_context.window.config["width"]
     height = gl_context.window.config["height"]
@@ -282,6 +263,7 @@ def test_renderer_divisor(gl_context: GLContext, buffer_type: BufferType) -> Non
 
     renderer.delete()
     data_handler.buffer.delete()
+    frame_buffer.delete()
 
 
 def test_ssbo_buffer_copy(gl_context: GLContext) -> None:

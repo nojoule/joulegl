@@ -6,6 +6,7 @@ from OpenGL.GL import *
 
 from joulegl.opengl_helper.base.data_set import BaseShaderSet
 from joulegl.opengl_helper.buffer import BufferObject, BufferType
+from joulegl.opengl_helper.frame_buffer import FrameBufferObject
 from joulegl.opengl_helper.render.shader import RenderShaderSetting
 from joulegl.opengl_helper.render.utility import (
     OGLRenderFunction,
@@ -160,35 +161,26 @@ def test_renderer(gl_context: GLContext, use_implicit_set_name: bool) -> None:
     renderer: SampleRenderer = SampleRenderer(
         data_handler, use_implicit_set_name, False
     )
+    frame_buffer = FrameBufferObject(
+        gl_context.window.config["width"], gl_context.window.config["height"]
+    )
+    frame_buffer.bind()
     renderer.render(np.array([1.0, 0.0, 0.0], dtype=np.float32))
     gl_context.window.swap()
 
-    pixel_data = None
-    glReadBuffer(GL_FRONT)
-    try:
-        pixel_data = np.frombuffer(
-            glReadPixels(
-                0,
-                0,
-                gl_context.window.config["width"],
-                gl_context.window.config["height"],
-                GL_RGBA,
-                GL_UNSIGNED_BYTE,
-            ),
-            dtype=np.uint8,
-        )
-    except Exception as e:
-        pass
+    pixel_data = frame_buffer.read()
 
+    expected_array = np.array(
+        [255, 0, 0, 255]
+        * gl_context.window.config["width"]
+        * gl_context.window.config["height"],
+        dtype=np.uint8,
+    )
     assert np.array_equal(
         pixel_data,
-        np.array(
-            [255, 0, 0, 255]
-            * gl_context.window.config["width"]
-            * gl_context.window.config["height"],
-            dtype=np.uint8,
-        ),
+        expected_array,
     )
 
     renderer.delete()
     data_handler.buffer.delete()
+    frame_buffer.delete()

@@ -33,14 +33,20 @@ class FrameBufferObject:
     def read(self) -> np.ndarray:
         glPixelStorei(GL_PACK_ALIGNMENT, 1)
         glReadBuffer(GL_COLOR_ATTACHMENT0)
-        data = glReadPixels(0, 0, self.width, self.height, GL_RGBA, GL_UNSIGNED_BYTE)
+        data = np.frombuffer(
+            glReadPixels(0, 0, self.width, self.height, GL_RGBA, GL_UNSIGNED_BYTE),
+            dtype=np.uint8,
+        )
         return data
 
     def bind(self) -> None:
         glBindFramebuffer(GL_FRAMEBUFFER, self.handle)
 
-    def delete(self) -> None:
+    def unbind(self) -> None:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+    def delete(self) -> None:
+        self.unbind()
         glDeleteRenderbuffers(1, [self.color_handle])
         glDeleteRenderbuffers(1, [self.depth_handle])
         glDeleteFramebuffers(1, [self.handle])
