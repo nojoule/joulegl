@@ -26,7 +26,6 @@ def test_wrong_shader_file_count() -> None:
 
 
 def test_set_textures(gl_context: GLContext) -> None:
-
     texture = Texture(100, 100)
     texture.setup(np.array([255] * 100 * 100 * 4, dtype=np.uint8), 0)
 

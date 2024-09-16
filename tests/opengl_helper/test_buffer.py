@@ -85,10 +85,8 @@ def test_swapping_buffer_object(gl_context: GLContext) -> None:
 
     buffer.swap()
     buffer.bind(0, False)
-    handle = glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, 0)
-    assert handle == buffer.handle
-    handle = glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, 1)
-    assert handle == buffer.swap_handle
+    assert glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, 0) == buffer.handle
+    assert glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, 1) == buffer.swap_handle
     read_data = np.frombuffer(
         glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, buffer.size),
         dtype=buffer.data.dtype,
@@ -96,8 +94,7 @@ def test_swapping_buffer_object(gl_context: GLContext) -> None:
     assert np.array_equal(read_data, data)
 
     buffer.bind(0, True)
-    handle = glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, 0)
-    assert handle == buffer.handle
+    assert glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, 0) == buffer.handle
 
     buffer.clear()
     cleared_data = buffer.read()

@@ -2,7 +2,6 @@ import abc
 from typing import Any, Callable, List, Tuple
 
 from ..vertex_data_handler import (
-    LayeredVertexDataHandler,
     OverflowingVertexDataHandler,
     VertexDataHandler,
 )
@@ -55,35 +54,6 @@ class DefaultSet(BaseShaderSet):
             self.use_func(self.element_count_func())
 
 
-class LayeredSet(BaseShaderSet):
-    def __init__(
-        self,
-        shader: BaseShader,
-        data_handler: LayeredVertexDataHandler,
-        use_func: Callable,
-        element_count_func: Callable,
-    ) -> None:
-        super().__init__(shader, use_func, element_count_func)
-        self.data_handler: LayeredVertexDataHandler = data_handler
-        self.buffer_divisor: List[Tuple[int, int]] = []
-
-    def set_buffer_divisor(self, buffer_divisor: List[Tuple[int, int]]) -> None:
-        self.buffer_divisor: List[Tuple[int, int]] = buffer_divisor
-
-    def use(self, render: bool = False) -> None:
-        if self.shader is not None:
-            self.shader.use()
-            for buffer in iter(self.data_handler):
-                buffer.set(render)
-                buffer.buffer_divisor = self.buffer_divisor
-                self.use_func(
-                    self.element_count_func(
-                        self.data_handler.current_layer_id,
-                        self.data_handler.current_sub_buffer_id,
-                    )
-                )
-
-
 class OverflowingSet(BaseShaderSet):
     def __init__(
         self,
@@ -118,6 +88,5 @@ class OverflowingSet(BaseShaderSet):
 
 DATA_TO_SET_MAP = {
     VertexDataHandler: DefaultSet,
-    LayeredVertexDataHandler: LayeredSet,
     OverflowingVertexDataHandler: OverflowingSet,
 }
