@@ -30,7 +30,7 @@ class RenderShader(BaseShader):
         vertex_src: str,
         fragment_src: str,
         geometry_src: str | None = None,
-        uniform_labels: List[str] | None = None,
+        uniform_labels: List[str] = [],
     ) -> None:
         BaseShader.__init__(self, name)
         if geometry_src is None:
@@ -44,8 +44,7 @@ class RenderShader(BaseShader):
                 compileShader(fragment_src, GL_FRAGMENT_SHADER),
                 compileShader(geometry_src, GL_GEOMETRY_SHADER),
             )
-        if uniform_labels is not None:
-            self.set_uniform_label(uniform_labels)
+        self.set_uniform_label(uniform_labels)
 
     def use(self) -> None:
         for texture, _, texture_position in self.textures:

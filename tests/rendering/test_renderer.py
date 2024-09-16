@@ -25,7 +25,12 @@ def gl_context() -> Generator[GLContext, None, None]:
 
 
 class ScreenQuadDataHandler:
-    def __init__(self, buffer_type: BufferType = BufferType.ARRAY_BUFFER) -> None:
+    def __init__(
+        self,
+        buffer_type: BufferType = BufferType.ARRAY_BUFFER,
+        use_geometry: bool = False,
+    ) -> None:
+        self.use_geometry = use_geometry
         # fmt: off
         self.data: np.ndarray = np.array(
             [
@@ -38,12 +43,20 @@ class ScreenQuadDataHandler:
             ],
             dtype=np.float32,
         )
+        if use_geometry:
+            self.data = np.array(
+            [
+                0.0, 0.0, 0.0, 1.0
+            ],
+            dtype=np.float32,
+        )
+
         # fmt: on
         self.buffer: BufferObject = BufferObject(buffer_type=buffer_type)
         self.parse_to_buffer()
 
     def get_buffer_points(self) -> int:
-        return 2
+        return 2 if not self.use_geometry else 1
 
     def parse_to_buffer(self) -> None:
         self.buffer.load(self.data)
@@ -76,6 +89,7 @@ class SampleRenderer(Renderer):
         data: ScreenQuadDataHandler,
         use_implicit_set_name: bool = True,
         color_buffer: ScreenQuadColorDataHandler | None = None,
+        use_geometry: bool = False,
     ) -> None:
         super().__init__()
 
@@ -97,15 +111,16 @@ class SampleRenderer(Renderer):
                 ]
             )
         else:
+            shader_src_list = ["screen_quad.vert", "screen_quad.frag"]
+            if use_geometry:
+                shader_src_list = [
+                    "screen_quad_geom.vert",
+                    "screen_quad.frag",
+                    "screen_quad_geom.geom",
+                ]
             shader_settings.extend(
                 [
-                    RenderShaderSetting(
-                        "screen_quad",
-                        [
-                            "screen_quad.vert",
-                            "screen_quad.frag",
-                        ],
-                    ),
+                    RenderShaderSetting("screen_quad", shader_src_list),
                 ]
             )
         self.set_shader(shader_settings)
@@ -120,7 +135,7 @@ class SampleRenderer(Renderer):
             )
 
         def generate_element_count_func(dh: ScreenQuadDataHandler) -> Callable:
-            count = 2 if color_buffer else 6
+            count = 2 if color_buffer else 1 if use_geometry else 6
 
             def element_count_func() -> int:
                 return count  # dh.get_buffer_points()
@@ -132,9 +147,14 @@ class SampleRenderer(Renderer):
                 OGLRenderFunction.ARRAYS_INSTANCED, GL_TRIANGLES, instance_vertices=6
             )
         else:
-            self.execute_funcs["screen_quad"] = generate_render_function(
-                OGLRenderFunction.ARRAYS, GL_TRIANGLES
-            )
+            if use_geometry:
+                self.execute_funcs["screen_quad"] = generate_render_function(
+                    OGLRenderFunction.ARRAYS, GL_POINTS
+                )
+            else:
+                self.execute_funcs["screen_quad"] = generate_render_function(
+                    OGLRenderFunction.ARRAYS, GL_TRIANGLES
+                )
         self.element_count_funcs["screen_quad"] = generate_element_count_func(self.data)
 
         if use_implicit_set_name:
@@ -158,9 +178,7 @@ class SampleRenderer(Renderer):
 @pytest.mark.parametrize("use_implicit_set_name", [True, False])
 def test_renderer(gl_context: GLContext, use_implicit_set_name: bool) -> None:
     data_handler: ScreenQuadDataHandler = ScreenQuadDataHandler()
-    renderer: SampleRenderer = SampleRenderer(
-        data_handler, use_implicit_set_name, False
-    )
+    renderer: SampleRenderer = SampleRenderer(data_handler, use_implicit_set_name, None)
     frame_buffer = FrameBufferObject(
         gl_context.window.config["width"], gl_context.window.config["height"]
     )

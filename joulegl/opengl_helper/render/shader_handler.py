@@ -1,34 +1,10 @@
-import abc
 import os
-from pathlib import Path
-from typing import Dict
 
-from ...utility.definitions import SHADER_PATH
-from ..base.shader import BaseShader, ShaderSetting
+from joulegl.opengl_helper.base.shader_handler import BaseShaderHandler
+
+from ..base.shader import ShaderSetting
 from ..base.shader_parser import ShaderParser, get_shader_src
 from .shader import RenderShader, RenderShaderSetting
-
-
-class BaseShaderHandler:
-    def __init__(self) -> None:
-        __metaclass__ = abc.ABCMeta
-        self.shader_list: Dict[str, BaseShader] = dict()
-        self.shader_dir: str = SHADER_PATH
-        if not os.path.exists(self.shader_dir):
-            self.shader_dir = os.path.join(
-                Path(SHADER_PATH).parent.absolute(), "shader"
-            )
-            if not os.path.exists(self.shader_dir):
-                self.shader_dir = SHADER_PATH
-
-    @abc.abstractmethod
-    def create(
-        self, shader_setting: ShaderSetting, parser: ShaderParser | None = None
-    ) -> BaseShader:
-        raise NotImplementedError
-
-    def get(self, shader_name: str) -> BaseShader:
-        return self.shader_list[shader_name]
 
 
 class RenderShaderHandler(BaseShaderHandler):
@@ -37,7 +13,6 @@ class RenderShaderHandler(BaseShaderHandler):
     ) -> RenderShader:
         if not isinstance(shader_setting, RenderShaderSetting):
             raise ValueError("RenderShaderSetting required for RenderShaderHandler")
-
         if shader_setting.id_name in self.shader_list.keys():
             return self.shader_list[shader_setting.id_name]
         vertex_path: str = os.path.join(self.shader_dir, shader_setting.vertex)

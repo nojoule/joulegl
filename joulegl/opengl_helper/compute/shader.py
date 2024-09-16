@@ -39,10 +39,6 @@ class ComputeShader(BaseShader):
                 [("work_group_offset", i * self.max_workgroup_size, "int")]
             )
 
-            for texture, flag, image_position in self.textures:
-                texture.bind_as_image(flag, image_position)
-            glUseProgram(self.shader_handle)
-
             for (
                 uniform_location,
                 uniform_data,
@@ -62,4 +58,6 @@ class ComputeShader(BaseShader):
         glMemoryBarrier(GL_ALL_BARRIER_BITS)
 
     def use(self) -> None:
-        pass
+        for texture, flag, image_position in self.textures:
+            texture.bind_as_image(flag, image_position)
+        glUseProgram(self.shader_handle)
