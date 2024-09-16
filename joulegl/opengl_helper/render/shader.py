@@ -26,12 +26,13 @@ class RenderShaderSetting(ShaderSetting):
 class RenderShader(BaseShader):
     def __init__(
         self,
+        name: str,
         vertex_src: str,
         fragment_src: str,
         geometry_src: str | None = None,
         uniform_labels: List[str] | None = None,
     ) -> None:
-        BaseShader.__init__(self)
+        BaseShader.__init__(self, name)
         if geometry_src is None:
             self.shader_handle = compileProgram(
                 compileShader(vertex_src, GL_VERTEX_SHADER),

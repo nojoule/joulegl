@@ -24,7 +24,7 @@ class BaseShaderSet:
         if self.shader is not None:
             self.shader.set_uniform_label(data)
 
-    def set_uniform_data(self, data: List[Tuple[str, Any, Any]]) -> None:
+    def set_uniform_data(self, data: List[Tuple[str, Any, str]]) -> None:
         if self.shader is not None:
             self.shader.set_uniform_data(data)
 

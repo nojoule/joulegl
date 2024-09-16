@@ -76,6 +76,8 @@ class Camera:
         rotation_speed: float = -0.25,
         offset_scale: float = 1.0,
     ) -> None:
+        self.screen_width: float = width
+        self.screen_height: float = height
         self.base: np.ndarray = base
         self.camera_pos: np.ndarray = self.base + np.array(
             [-3.0, 0.0, 0.0], dtype=np.float32
@@ -166,6 +168,8 @@ class Camera:
         )
 
     def set_size(self, width: float, height: float) -> None:
+        self.screen_width = width
+        self.screen_height = height
         self.projection = create_perspective_projection_matrix(
             45, width / height, 0.1, 100
         )

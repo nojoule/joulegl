@@ -59,6 +59,10 @@ class RenderShaderHandler(BaseShaderHandler):
                 else parser.parse(geometry_path)
             )
         self.shader_list[shader_setting.id_name] = RenderShader(
-            vertex_src, fragment_src, geometry_src, shader_setting.uniform_labels
+            shader_setting.id_name,
+            vertex_src,
+            fragment_src,
+            geometry_src,
+            shader_setting.uniform_labels,
         )
         return self.shader_list[shader_setting.id_name]

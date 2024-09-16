@@ -22,8 +22,8 @@ class ComputeShaderSetting(ShaderSetting):
 
 
 class ComputeShader(BaseShader):
-    def __init__(self, shader_src: str) -> None:
-        BaseShader.__init__(self)
+    def __init__(self, name: str, shader_src: str) -> None:
+        BaseShader.__init__(self, name)
         self.shader_handle: int = compileProgram(
             compileShader(shader_src, GL_COMPUTE_SHADER)
         )
@@ -60,3 +60,6 @@ class ComputeShader(BaseShader):
     @staticmethod
     def barrier() -> None:
         glMemoryBarrier(GL_ALL_BARRIER_BITS)
+
+    def use(self) -> None:
+        pass

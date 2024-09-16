@@ -18,5 +18,7 @@ class ComputeShaderHandler(BaseShaderHandler):
         shader_src = (
             get_shader_src(shader_path) if parser is None else parser.parse(shader_path)
         )
-        self.shader_list[shader_setting.id_name] = ComputeShader(shader_src)
+        self.shader_list[shader_setting.id_name] = ComputeShader(
+            shader_setting.id_name, shader_src
+        )
         return self.shader_list[shader_setting.id_name]

@@ -50,8 +50,9 @@ class ShaderSetting:
 
 
 class BaseShader:
-    def __init__(self) -> None:
+    def __init__(self, name: str) -> None:
         __metaclass__ = abc.ABCMeta
+        self.name: str = name
         self.shader_handle: int = 0
         self.textures: List[Tuple[Texture, str, int]] = []
         self.uniform_cache: Dict[str, Tuple[int, Any, Callable]] = dict()
@@ -62,15 +63,23 @@ class BaseShader:
         for setting in data:
             self.uniform_labels.append(setting)
 
-    def set_uniform_labeled_data(self, config: ShaderConfig) -> None:
+    def set_uniform_labeled_data(self, config: ShaderConfig | None) -> None:
         if config is not None:
             uniform_data = []
-            for setting, shader_name in config.shader_name.items():
-                if setting in self.uniform_labels:
-                    uniform_data.append((shader_name, config[setting], "float"))
+            if self.name in config.shader_uniform_name_map:
+                uniform_names = config.shader_uniform_name_map[self.name]
+                for uniform_name in uniform_names:
+                    if uniform_name in self.uniform_labels:
+                        uniform_data.append(
+                            (
+                                uniform_name,
+                                config[uniform_name],
+                                config.uniform_type[uniform_name],
+                            )
+                        )
             self.set_uniform_data(uniform_data)
 
-    def set_uniform_data(self, data: List[Tuple[str, Any, Any]]) -> None:
+    def set_uniform_data(self, data: List[Tuple[str, Any, str]]) -> None:
         program_is_set: bool = False
         for uniform_name, uniform_data, uniform_setter in data:
             if uniform_name not in self.uniform_ignore_labels:
@@ -102,4 +111,4 @@ class BaseShader:
 
     @abc.abstractmethod
     def use(self) -> None:
-        pass
+        raise NotImplementedError
