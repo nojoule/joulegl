@@ -168,3 +168,4 @@ test_start.sh
 tests/tmp/*
 !tests/tmp/.gitkeep
 screenshots/
+pytest-coverage.txt
