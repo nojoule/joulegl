@@ -2,13 +2,13 @@ from typing import Callable, Generator, List
 
 import numpy as np
 import pytest
-from OpenGL.GL import *
 
 from joulegl.opengl_helper.base.data_set import BaseShaderSet
 from joulegl.opengl_helper.buffer import BufferObject, BufferType
 from joulegl.opengl_helper.frame_buffer import FrameBufferObject
 from joulegl.opengl_helper.render.shader import RenderShaderSetting
 from joulegl.opengl_helper.render.utility import (
+    OglPrimitives,
     OGLRenderFunction,
     generate_render_function,
 )
@@ -144,16 +144,18 @@ class SampleRenderer(Renderer):
 
         if color_buffer:
             self.execute_funcs["screen_quad"] = generate_render_function(
-                OGLRenderFunction.ARRAYS_INSTANCED, GL_TRIANGLES, instance_vertices=6
+                OGLRenderFunction.ARRAYS_INSTANCED,
+                OglPrimitives.TRIANGLES,
+                instance_vertices=6,
             )
         else:
             if use_geometry:
                 self.execute_funcs["screen_quad"] = generate_render_function(
-                    OGLRenderFunction.ARRAYS, GL_POINTS
+                    OGLRenderFunction.ARRAYS, OglPrimitives.POINTS
                 )
             else:
                 self.execute_funcs["screen_quad"] = generate_render_function(
-                    OGLRenderFunction.ARRAYS, GL_TRIANGLES
+                    OGLRenderFunction.ARRAYS, OglPrimitives.TRIANGLES
                 )
         self.element_count_funcs["screen_quad"] = generate_element_count_func(self.data)
 

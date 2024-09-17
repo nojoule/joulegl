@@ -75,8 +75,6 @@ class Window(BaseWindow):
             int(self.config["height"] / 2),
         )
         self.mouse_set: bool = False
-        self.freeze: bool = True
-        self.gradient: bool = True
         self.mouse_captured: bool = False
         self.focused: bool = True
         self.screenshot: bool = False
@@ -176,10 +174,6 @@ class Window(BaseWindow):
                 elif action == glfw.RELEASE:
                     self.cam.stop(self.camera_movement_map[key])
 
-            if key == glfw.KEY_F and action == glfw.RELEASE:
-                self.freeze = not self.freeze
-            if key == glfw.KEY_G and action == glfw.RELEASE:
-                self.gradient = not self.gradient
             if key == glfw.KEY_H and action == glfw.RELEASE:
                 self.cam.rotate_around_base = not self.cam.rotate_around_base
                 self.config["camera_rotation"] = self.cam.rotate_around_base

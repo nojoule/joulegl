@@ -4,7 +4,6 @@ from enum import IntEnum
 from typing import Callable, Dict, List, Tuple
 
 import numpy as np
-from OpenGL.GL import *
 
 sys.path.append(os.getcwd())
 
@@ -14,6 +13,7 @@ from joulegl.opengl_helper.base.shader_parser import ShaderParser
 from joulegl.opengl_helper.buffer import BufferObject
 from joulegl.opengl_helper.render.shader import RenderShaderSetting
 from joulegl.opengl_helper.render.utility import (
+    OglPrimitives,
     OGLRenderFunction,
     generate_render_function,
 )
@@ -114,7 +114,7 @@ class BlockRenderer(Renderer):
             return element_count_func
 
         self.execute_funcs["block"] = generate_render_function(
-            OGLRenderFunction.ARRAYS, GL_POINTS, depth_test=True
+            OGLRenderFunction.ARRAYS, OglPrimitives.POINTS, depth_test=True
         )
         self.element_count_funcs["block"] = generate_element_count_func(self.bdh)
         self.create_sets(self.data_handler, "block")

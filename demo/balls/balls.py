@@ -4,7 +4,6 @@ from typing import Callable, List, Tuple
 
 import glfw
 import numpy as np
-from OpenGL.GL import *
 
 sys.path.append(os.getcwd())
 
@@ -16,6 +15,9 @@ from joulegl.opengl_helper.buffer import BufferType, SwappingBufferObject
 from joulegl.opengl_helper.compute.shader import ComputeShader, ComputeShaderSetting
 from joulegl.opengl_helper.render.shader import RenderShaderSetting
 from joulegl.opengl_helper.render.utility import (
+    OglBlendingEquations,
+    OglBlendingFactors,
+    OglPrimitives,
     OGLRenderFunction,
     generate_render_function,
 )
@@ -99,10 +101,18 @@ class BallRenderer(Renderer):
             return element_count_func
 
         self.execute_funcs["sphere"] = generate_render_function(
-            OGLRenderFunction.ARRAYS, GL_POINTS, depth_test=True
+            OGLRenderFunction.ARRAYS, OglPrimitives.POINTS, depth_test=True
         )
         self.execute_funcs["triangle"] = generate_render_function(
-            OGLRenderFunction.ARRAYS, GL_TRIANGLES, depth_test=False
+            OGLRenderFunction.ARRAYS,
+            OglPrimitives.TRIANGLES,
+            depth_test=False,
+            add_blending=[
+                OglBlendingFactors.SRC_ALPHA,
+                OglBlendingFactors.ONE_MINUS_SRC_ALPHA,
+                OglBlendingEquations.FUNC_ADD,
+                OglBlendingEquations.FUNC_ADD,
+            ],
         )
         self.element_count_funcs["sphere"] = generate_element_count_func(self.bdh)
         self.element_count_funcs["triangle"] = generate_element_count_func(self.bdh)
@@ -167,29 +177,39 @@ class BallProcessor(ComputeProcessor):
         self.data_handler.delete()
 
 
+def generate_random_balls_in_a_sphere(
+    area: Tuple[int, int, int], ball_size: float
+) -> List[BallData]:
+    balls: List[BallData] = []
+    for x in range(area[0] * 10):
+        x = x / 10.0
+        sqr_off_x = abs(x - area[0] * 0.5) * abs(x - area[0] * 0.5)
+        for y in range(area[1] * 10):
+            y = y / 10.0
+            sqr_off_y = abs(y - area[1] * 0.5) * abs(y - area[1] * 0.5)
+            for z in range(area[2] * 10):
+                z = z / 10.0
+                if (
+                    sqr_off_x
+                    + sqr_off_y
+                    + abs(z - area[2] * 0.5) * abs(z - area[2] * 0.5)
+                    <= area[0] * area[0] * 0.25
+                ):
+                    balls.append(
+                        BallData(
+                            np.array([x, y, z], dtype=np.float32),
+                            ball_size,
+                        )
+                    )
+    return balls
+
+
 class BallApp(App):
     def __init__(self) -> None:
         super().__init__("Ball Demo")
-        size: Tuple[int, int, int] = (10, 10, 10)
-        balls: List[BallData] = []
-        for x in range(size[0] * 10):
-            sqr_off_x = abs(x * 0.1 - 5.0) * abs(x * 0.1 - 5.0)
-            for y in range(size[1] * 10):
-                sqr_off_y = abs(y * 0.1 - 5.0) * abs(y * 0.1 - 5.0)
-                for z in range(size[2] * 10):
-                    if (
-                        sqr_off_x + sqr_off_y + abs(z * 0.1 - 5.0) * abs(z * 0.1 - 5.0)
-                        <= 10.0
-                    ):
-                        balls.append(
-                            BallData(
-                                np.array([x * 0.1, y * 0.1, z * 0.1], dtype=np.float32),
-                                0.1,
-                            )
-                        )
 
         self.bdh: BallDataHandler = BallDataHandler()
-        self.bdh.apply(balls)
+        self.bdh.apply(generate_random_balls_in_a_sphere((10, 10, 10), 0.1))
         self.br: BallRenderer = BallRenderer(self.bdh)
         self.bp: BallProcessor = BallProcessor(self.bdh)
         self.br_config: ShaderConfig = ShaderConfig()
@@ -211,7 +231,9 @@ class BallApp(App):
                 self.active_renderer = "sphere"
         if key == glfw.KEY_C and action == glfw.RELEASE:
             self.bdh.parse_to_buffer()
-        return True
+        if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
+            glfw.set_window_should_close(self.window.window_handle, True)
+        return False
 
 
 if __name__ == "__main__":

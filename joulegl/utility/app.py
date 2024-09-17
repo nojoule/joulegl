@@ -64,24 +64,26 @@ class App(Timed):
         self.window.cam.set_position(pose)
 
     def run(self) -> None:
-        while self.window.is_active() and not self.closed:
-            self.frame()
+        try:
+            while self.window.is_active() and not self.closed:
+                self.frame()
 
-            if self.window.screenshot:
-                width, height = self.window.get_size()
-                create_screenshot(int(width), int(height))
-                self.window.screenshot = False
-            elif self.window.record:
-                width, height = self.window.get_size()
-                self.window.frame_id += 1
-                create_screenshot(
-                    int(width), int(height), frame_id=self.window.frame_id
-                )
+                if self.window.screenshot:
+                    width, height = self.window.get_size()
+                    create_screenshot(int(width), int(height))
+                    self.window.screenshot = False
+                elif self.window.record:
+                    width, height = self.window.get_size()
+                    self.window.frame_id += 1
+                    create_screenshot(
+                        int(width), int(height), frame_id=self.window.frame_id
+                    )
 
-            pause_for = self.check_time()
-            if pause_for > 0:
-                time.sleep(pause_for / 1000.0)
-
+                pause_for = self.check_time()
+                if pause_for > 0:
+                    time.sleep(pause_for / 1000.0)
+        except KeyboardInterrupt:
+            pass
         self.cleanup()
 
     def close(self) -> None:
