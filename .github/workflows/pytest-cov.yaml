@@ -10,24 +10,27 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Test glxinfo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mesa-utils xvfb libsm6 libxext6 libgl1-mesa-dev libosmesa6-dev
+          xvfb-run glxinfo
+      
       - name: Set up Python 3.11
         uses: actions/setup-python@v2
         with:
-          python-version: 3.11
+          python-version: 3.11.7
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-cov
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Run tests and coverage report
-        id: pytest1
-        uses: coactions/setup-xvfb@v1
-        with:
-          run: |
-            sh ./pytest.sh
-          working-directory: ./
+      
+      - name: Test GL Version
+        run: |
+          xvfb-run ./pytest.sh
+        working-directory: ./
         continue-on-error: true
         timeout-minutes: 1
 

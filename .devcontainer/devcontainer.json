@@ -1,0 +1,15 @@
+{
+    "customizations": {
+        "vscode": {
+            "editor.formatOnSave": true,
+            "extensions": [
+                "ms-python.black-formatter",
+                "ms-python.isort"
+            ]
+        }
+    },
+    "dockerComposeFile": "docker-compose.yml",
+    "name": "JouleGL",
+    "service": "devcontainer",
+    "workspaceFolder": "/workspaces/joulegl"
+}
