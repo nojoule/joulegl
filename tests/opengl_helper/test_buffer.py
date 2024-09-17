@@ -274,3 +274,6 @@ def test_ssbo_buffer_copy(gl_context: GLContext) -> None:
     assert np.array_equal(buffer_copy.read(), buffer.read())
 
     buffer.delete()
+
+
+# TODO: test element array buffer

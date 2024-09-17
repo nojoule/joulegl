@@ -101,6 +101,7 @@ class Camera:
         self.rotate_around_base: bool = rotation
         self.yaw_offset: float = 0.0
         self.zoom: float = 0.0
+        self.update_camera_vectors()
 
     def update(self) -> None:
         self.update_camera_vectors()
@@ -134,6 +135,7 @@ class Camera:
 
     def update_camera_vectors(self) -> None:
         if not self.rotate_around_base:
+            # TODO: only update if pitch or yaw changed
             front: np.ndarray = self.calculate_direction()
         else:
             self.yaw_offset += self.rotation_speed
@@ -152,6 +154,7 @@ class Camera:
             self.move_vector[1] = 0.0
             self.move_vector[2] = 0.0
 
+        # TODO: only update if front changed
         self.camera_front = front
         self.camera_right = normalize(
             np.cross(self.camera_front, np.array([0.0, 1.0, 0.0], dtype=np.float32))
