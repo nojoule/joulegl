@@ -1,0 +1,39 @@
+[project]
+name = "joulegl"
+description = "Low level rendering framework using OpenGL python bindings."
+version = "1.0.0"
+authors = [
+  {name = "Nojoule", email = "nojoule0@gmail.com"}
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent"
+]
+dependencies = [
+  "aiohttp==3.10.5",
+  "glfw==2.7.0",
+  "numpy==1.26.4",
+  "PyOpenGL==3.1.7",
+  "Pillow==9.5.0"
+]
+license = {file = "LICENSE"}
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.urls]
+Repository  = "https://github.com/nojoule/joulegl"
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.3.2",
+  "pytest-cov==5.0.0"
+]
+
+[tool.setuptools.packages.find]
+include = ["joulegl*"]
+namespaces = false
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
