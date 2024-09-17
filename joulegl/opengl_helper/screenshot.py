@@ -28,14 +28,21 @@ def create_screenshot(
         glReadBuffer(GL_FRONT)
     try:
         pixel_data = np.frombuffer(
-            glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE)
-            if frame_buffer is None
-            else frame_buffer.read()
+            (
+                glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE)
+                if frame_buffer is None
+                else frame_buffer.read()
+            ),
+            dtype=np.uint8,
         )
     except Exception as e:
         LOGGER.error(f"Screenshot failed: {e}")
         return
-    image: Image = Image.frombuffer("RGBA", (width, height), pixel_data)
+
+    # flip the image vertically
+    pixel_data = np.flipud(pixel_data.reshape(height, width, 4))
+
+    image: Image = Image.frombuffer("RGBA", (width, height), pixel_data.flatten())
 
     time_key: str = datetime.utcfromtimestamp(
         datetime.timestamp(datetime.now().replace(tzinfo=timezone.utc).astimezone())
